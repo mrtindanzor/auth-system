@@ -1,53 +1,50 @@
-import type { NextFunction, Request, Response } from "express";
-import { UnauthorizedError } from "../errors/UnauthorizedError";
-import { getBearerToken } from "../utils/getBearerToken";
+import { UnauthorizedError } from "../errors/errors";
 
 export type TokenPayload = Record<string, unknown> & {
   userId: string;
   role: "user" | "admin";
 };
 
+export type AttachUserResult = {
+  tokenPayload: TokenPayload;
+  userId: string;
+  role: "user" | "admin";
+};
+
 export interface ITokenVerifier {
   verifyAccessToken(token: string): Promise<TokenPayload | null>;
-  verifyRefreshToken(token: string): Promise<{ userId: string; role: "user" | "admin" } | null>;
+  verifyRefreshToken(
+    token: string,
+  ): Promise<{ userId: string; role: "user" | "admin" } | null>;
 }
 
-export function createAuthMiddleware(verifier: ITokenVerifier) {
-  async function attachUser(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
-    const accessToken = getBearerToken(req.headers.authorization ?? "");
-    if (!accessToken) return next();
+export class AuthMiddleware {
+  constructor(private verifier: ITokenVerifier) {}
 
-    const payload = await verifier.verifyAccessToken(accessToken);
-    if (!payload) return next();
+  async attachUser(accessToken: string): Promise<AttachUserResult | null> {
+    if (!accessToken) return null;
 
-    res.locals.tokenPayload = payload;
-    res.locals.userId = payload.userId;
-    res.locals.role = payload.role;
+    const payload = await this.verifier.verifyAccessToken(accessToken);
+    if (!payload) return null;
 
-    return next();
-  }
-
-  async function requireAuth(
-    _req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
-    if (!res.locals.role) throw new UnauthorizedError();
-    return next();
-  }
-
-  async function requireRole(...roles: string[]) {
-    return (_req: Request, res: Response, next: NextFunction) => {
-      if (!res.locals.role || !roles.includes(res.locals.role as string)) {
-        throw new UnauthorizedError();
-      }
-      return next();
+    return {
+      tokenPayload: payload,
+      userId: payload.userId,
+      role: payload.role,
     };
   }
 
-  return { attachUser, requireAuth, requireRole };
+  requireAuth(user: { role?: string } | null): void {
+    if (!user?.role) throw new UnauthorizedError();
+  }
+
+  requireRole(user: { role?: string } | null, ...roles: string[]): void {
+    if (!user?.role || !roles.includes(user.role)) {
+      throw new UnauthorizedError();
+    }
+  }
+}
+
+export function createAuthMiddleware(verifier: ITokenVerifier) {
+  return new AuthMiddleware(verifier);
 }

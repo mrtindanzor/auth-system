@@ -1,5 +1,3 @@
-import type { CookieOptions, Response } from "express";
-
 export type AuthCookieConfig = {
   name?: string;
   httpOnly?: boolean;
@@ -10,26 +8,31 @@ export type AuthCookieConfig = {
   maxAge?: number;
 };
 
+export type CookieConfig = {
+  name: string;
+  value?: string;
+  options: Record<string, unknown>;
+};
+
 export function createAuthCookieHelpers(config: AuthCookieConfig = {}) {
   const cookieName = config.name ?? "auth";
 
-  const options: CookieOptions = {
+  const options: Record<string, unknown> = {
     httpOnly: config.httpOnly ?? true,
     secure: config.secure ?? false,
     sameSite: config.sameSite ?? "lax",
     path: config.path ?? "/",
     domain: config.domain,
     maxAge: config.maxAge ?? 3 * 24 * 60 * 60 * 1000,
-    signed: false,
   };
 
-  function setRefreshToken(token: string, res: Response, name = cookieName) {
-    res.cookie(name, token, options);
+  function setRefreshToken(token: string, name = cookieName): CookieConfig {
+    return { name, value: token, options };
   }
 
-  function clearRefreshToken(res: Response, name = cookieName) {
+  function clearRefreshToken(name = cookieName): CookieConfig {
     const { maxAge: _m, sameSite: _s, ...clearOptions } = options;
-    res.clearCookie(name, clearOptions);
+    return { name, options: clearOptions };
   }
 
   return { setRefreshToken, clearRefreshToken, options };

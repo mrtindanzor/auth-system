@@ -1,25 +1,27 @@
-export { UnauthorizedError } from "./errors";
-export { encodeAuthSecret, deriveAuthSecret } from "./config";
-export type { AuthSecretConfig, AuthTokenExpiry } from "./config";
-export {
-  signToken,
-  decodeToken,
-  verifyToken,
-  generateTokenPair,
-  createAuthCookieHelpers,
-  createBcryptPasswordHasher,
-  createAuthMiddleware,
-} from "./auth";
 export type {
-  TokenPair,
+  AttachUserResult,
+  AuthCookieConfig,
   AuthRole,
   AuthTokenPayload,
-  TokenConfig,
-  AuthCookieConfig,
+  CookieConfig,
+  IAuthService,
   IPasswordHasher,
   ITokenVerifier,
-  TokenPayload,
   IUserRepository,
-  IAuthService,
+  TokenConfig,
+  TokenPair,
+  TokenPayload,
 } from "./auth";
+export {
+  createAuthCookieHelpers,
+  createAuthMiddleware,
+  createBcryptPasswordHasher,
+  decodeToken,
+  generateTokenPair,
+  signToken,
+  verifyToken,
+} from "./auth";
+export type { AuthSecretConfig, AuthTokenExpiry } from "./config";
+export { deriveAuthSecret, encodeAuthSecret } from "./config";
+export { UnauthorizedError } from "./errors";
 export { getBearerToken } from "./utils";

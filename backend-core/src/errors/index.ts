@@ -1,1 +1,1 @@
-export { UnauthorizedError } from "./UnauthorizedError";
+export { UnauthorizedError } from "./errors";
