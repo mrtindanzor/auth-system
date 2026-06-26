@@ -27,11 +27,12 @@
 	},
 	"devDependencies": {
 		"@types/react": "^19.0.0",
-		"@types/react-dom": "^19.0.0"
+		"@types/react-dom": "^19.0.0",
+		"typescript": "^6.0.3"
 	},
 	"peerDependencies": {
+		"axios": "^1.0.0",
 		"react": "^19.0.0",
-		"react-dom": "^19.0.0",
-		"axios": "^1.0.0"
+		"react-dom": "^19.0.0"
 	}
 }
