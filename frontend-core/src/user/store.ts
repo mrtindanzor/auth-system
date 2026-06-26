@@ -9,7 +9,7 @@ export type UserStore<T extends object> = {
   clearUser: () => void;
 };
 
-export function createUserStore<T extends Record<string, unknown>>() {
+export function createUserStore<T extends object>() {
   return create<UserStore<T>>((set, get) => ({
     user: null,
 

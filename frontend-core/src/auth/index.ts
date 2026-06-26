@@ -1,10 +1,10 @@
 export { createUseAuth } from "./hooks/useAuth";
 export { createUseAuthRefresh } from "./hooks/useAuthRefresh";
 export { createUseAuthService } from "./hooks/useAuthService";
-export { createAuthGuard } from "./middleware";
 export type { AuthGuardConfig } from "./middleware";
-export { createAuthService } from "./service";
+export { createAuthGuard } from "./middleware";
 export type { AuthServiceOptions, IAuthService } from "./service";
-export { createAuthStore } from "./store";
+export { createAuthService } from "./service";
 export type { AuthActions, AuthState, AuthStore } from "./store";
+export { createAuthStore } from "./store";
 export { decodeUserFromToken } from "./tokens";

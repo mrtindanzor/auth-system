@@ -3,17 +3,17 @@ import {
   createUseAuthRefresh,
   createUseAuthService,
 } from "./auth";
-import { AuthGuardConfig, createAuthGuard } from "./auth/middleware";
-import { AuthServiceOptions } from "./auth/service";
+import { type AuthGuardConfig, createAuthGuard } from "./auth/middleware";
+import type { AuthServiceOptions } from "./auth/service";
 import { createAuthStore } from "./auth/store";
 import { createUserStore } from "./user";
 
-export { createAuthGuard } from "./auth/middleware";
 export type { AuthGuardConfig } from "./auth/middleware";
-export { createAuthService } from "./auth/service";
+export { createAuthGuard } from "./auth/middleware";
 export type { AuthServiceOptions, IAuthService } from "./auth/service";
-export { createAuthStore } from "./auth/store";
+export { createAuthService } from "./auth/service";
 export type { AuthActions, AuthState, AuthStore } from "./auth/store";
+export { createAuthStore } from "./auth/store";
 export { decodeUserFromToken } from "./auth/tokens";
 
 export function createAuthClient<

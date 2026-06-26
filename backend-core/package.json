@@ -15,21 +15,20 @@
 		"dist"
 	],
 	"scripts": {
-		"lint": "biome check src/",
-		"lint:fix": "biome check --write src/",
+		"lint": "biome check src/ && tsc --noEmit",
+		"lint:fix": "biome check --write src/ && tsc --noEmit",
 		"format": "biome format --write src/",
-		"build": "tsc",
+		"build": "tsc && tsc-alias --resolve-full-paths",
 		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
-		"jose": "^5.0.0"
-	},
-	"peerDependencies": {
+		"jose": "^5.0.0",
 		"bcrypt": "^5.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.1",
 		"@types/bcrypt": "^6.0.0",
+		"tsc-alias": "^1.8.17",
 		"typescript": "^6.0.3"
 	}
 }
