@@ -1,0 +1,5 @@
+packages:
+  - "backend-core"
+  - "frontend-core"
+allowBuilds:
+  bcrypt: false

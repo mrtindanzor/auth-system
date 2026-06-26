@@ -1,3 +1,2 @@
-dist
-backend-core/node_modules
-frontend-core/node_modules
+*dist
+*node_modules
