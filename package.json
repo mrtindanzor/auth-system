@@ -1,3 +1,7 @@
 {
-	"version": "0.1.0"
+	"scripts": {
+		"format": "pnpm -r format",
+		"lint": "pnpm -r lint",
+		"publish": "pnpm -r publish"
+	}
 }

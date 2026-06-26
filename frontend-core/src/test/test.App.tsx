@@ -1,6 +1,5 @@
-import { StrictMode, useEffect } from "react";
-import { createRoot } from "react-dom/client";
-import { createAuthClient } from "./index";
+import { useEffect } from "react";
+import { createAuthClient } from "../index";
 
 type User = { email: string; name: string };
 type LoginProps = { email: string; password: string };
@@ -28,7 +27,7 @@ const {
   },
 );
 
-function App() {
+export function App() {
   useAuthRefresh();
   const hasRefreshed = useAuthStore((s) => s.hasRefreshed);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -39,12 +38,3 @@ function App() {
 
   return <div> works</div>;
 }
-
-const app = document.getElementById("root");
-if (!app) throw new Error("No root element");
-
-createRoot(app).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
