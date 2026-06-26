@@ -1,6 +1,6 @@
-# `@tindanzor-solutions/auth/client`
+# `@tindanzor/auth-client`
 
-Authentication framework for frontend applications.
+Authentication framework for React frontend applications.
 
 Extracted from MyGhMart's authentication system. Provides auth store, JWT decode, login/register/logout/refresh/password-reset, route guards, user store, auth hooks, and an auth API client.
 
@@ -14,7 +14,7 @@ If a module would still exist without authentication in the application, it does
 
 ```
 Application
-  └── @tindanzor-solutions/auth/client (authentication framework)
+  └── @tindanzor/auth-client (authentication framework)
         ├── api/client.ts       Auth axios instance
         ├── api/types.ts        Auth endpoint + token types
         ├── auth/store.ts       Zustand auth store (access token, refresh state)
@@ -32,17 +32,17 @@ Application
 ### Installation
 
 ```bash
-pnpm add @tindanzor-solutions/auth/client
+pnpm add @tindanzor/auth-client
 ```
 
-Peer dependencies: `react` (^19), `react-dom` (^19), `axios` (^1), `zustand` (^5), `jose` (^5).
+Peer dependencies: `react` (^19), `react-dom` (^19), `axios` (^1).
 
 ### Quick Setup — `createAuthClient`
 
 For most apps, the easiest entry point is `createAuthClient`. It wires together the auth store, user store, service, and hooks in a single call.
 
 ```typescript
-import { createAuthClient } from "@tindanzor-solutions/auth/client";
+import { createAuthClient } from "@tindanzor/auth-client";
 
 type AppUser = { id: string; name: string; email: string };
 type LoginPayload = { credentials: string; password: string };
@@ -68,7 +68,7 @@ export const {
   {
     protectedPaths: ["/profile", "/dashboard"],
     authPaths: ["/signin", "/signup"],
-    isAuthenticated: () => useAuthStore.getState().isLoggedIn,
+    isAuthenticatedServer: () => { /* server function to return logged in status, eg. server function that checks if auth cookie is set*/ },
     onUnauthenticated: (path) => { /* redirect to /signin */ },
     onAuthenticated: () => { /* redirect to / */ },
   },
@@ -82,7 +82,7 @@ You can also compose the pieces manually if you need more control.
 #### Auth Store
 
 ```typescript
-import { createAuthStore } from "@tindanzor-solutions/auth/client";
+import { createAuthStore } from "@tindanzor/auth-client";
 
 const useAuthStore = createAuthStore();
 
@@ -101,7 +101,7 @@ useAuthStore.getState().logout();
 #### Auth Service
 
 ```typescript
-import { createAuthService } from "@tindanzor-solutions/auth/client";
+import { createAuthService } from "@tindanzor/auth-client";
 
 const authService = createAuthService({
   baseUrl: "https://api.example.com",
@@ -130,7 +130,7 @@ await authService.resetPassword?.({ token: "...", password: "newpass" });
 #### JWT Decode
 
 ```typescript
-import { decodeUserFromToken } from "@tindanzor-solutions/auth/client";
+import { decodeUserFromToken } from "@tindanzor/auth-client";
 
 type AppUser = { id: string; name: string; email: string };
 const user = decodeUserFromToken<AppUser>(accessToken);
@@ -140,7 +140,7 @@ const user = decodeUserFromToken<AppUser>(accessToken);
 #### User Store
 
 ```typescript
-import { createUserStore } from "@tindanzor-solutions/auth/client";
+import { createUserStore } from "@tindanzor/auth-client";
 
 type AppUser = { id: string; name: string; email: string };
 const useUserStore = createUserStore<AppUser>();
@@ -161,12 +161,12 @@ useUserStore.getState().clearUser();
 #### Route Guards
 
 ```typescript
-import { createAuthGuard } from "@tindanzor-solutions/auth/client";
+import { createAuthGuard } from "@tindanzor/auth-client";
 
 const guard = createAuthGuard({
   protectedPaths: ["/profile", "/dashboard"],
   authPaths: ["/signin", "/signup"],
-  isAuthenticated: () => useAuthStore.getState().isLoggedIn,
+  isAuthenticatedServer: () => { /* server function to return logged in status, eg. server function that checks if auth cookie is set*/ },
   onUnauthenticated: (path) => { /* redirect to /signin?next= */ },
   onAuthenticated: () => { /* redirect to / */ },
 });
@@ -180,7 +180,7 @@ guard.assertNotAuthenticated("/signin");
 #### Auth Hooks
 
 ```typescript
-import { createUseAuthService, createUseAuthRefresh, createUseAuth } from "@tindanzor-solutions/auth/client";
+import { createUseAuthService, createUseAuthRefresh, createUseAuth } from "@tindanzor/auth-client";
 
 // 1. Service hook (memoises auth service with token getter)
 const useAuthService = createUseAuthService(useAuthStore, {
@@ -205,7 +205,7 @@ await login({ credentials: "email", password: "pass" });
 #### API Client
 
 ```typescript
-import { createAuthAxiosClient } from "@tindanzor-solutions/auth/client";
+import { createAuthAxiosClient } from "@tindanzor/auth-client";
 
 const axios = createAuthAxiosClient({
   baseUrl: "https://api.example.com",
@@ -217,7 +217,7 @@ const axios = createAuthAxiosClient({
 #### Utilities
 
 ```typescript
-import { tryCatch, syncTryCatch, fe } from "@tindanzor-solutions/auth/client";
+import { tryCatch, syncTryCatch, fe } from "@tindanzor/auth-client";
 
 const [data, error] = await tryCatch(fetch("/api"));
 const [result, err] = syncTryCatch(() => JSON.parse(raw));
@@ -228,7 +228,7 @@ const message = fe(error); // "Something went wrong" (fallback)
 #### Error Types
 
 ```typescript
-import { AppError, UnauthorizedError, ForbiddenError } from "@tindanzor-solutions/auth/client";
+import { AppError, UnauthorizedError, ForbiddenError } from "@tindanzor/auth-client";
 ```
 
 ## Configuration Over Modification

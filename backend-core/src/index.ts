@@ -1,11 +1,3 @@
-export {
-  createAuthCookieHelpers,
-  createAuthMiddleware,
-  decodeToken,
-  generateTokenPair,
-  signToken,
-  verifyToken,
-} from "./auth";
 export type {
   AttachUserResult,
   AuthCookieConfig,
@@ -20,7 +12,15 @@ export type {
   TokenPair,
   TokenPayload,
 } from "./auth";
-export { deriveAuthSecret, encodeAuthSecret } from "./config";
+export {
+  createAuthCookieHelpers,
+  createAuthMiddleware,
+  decodeToken,
+  generateTokenPair,
+  signToken,
+  verifyToken,
+} from "./auth";
 export type { AuthSecretConfig, AuthTokenExpiry } from "./config";
+export { deriveAuthSecret, encodeAuthSecret } from "./config";
 export { UnauthorizedError } from "./errors";
 export { getBearerToken } from "./utils";

@@ -1,8 +1,13 @@
 import { UnauthorizedError } from "../errors";
-import { FindUserBy, IAuthService, IUserRepository } from "./contracts";
+import type { FindUserBy, IAuthService, IUserRepository } from "./contracts";
 import { PasswordHasher } from "./password";
 import { assertUniqueUser } from "./rules";
-import { AuthRole, generateTokenPair, TokenConfig, TokenPair } from "./tokens";
+import {
+  type AuthRole,
+  generateTokenPair,
+  type TokenConfig,
+  type TokenPair,
+} from "./tokens";
 
 class AuthService implements IAuthService {
   private passwordHasher = new PasswordHasher();
