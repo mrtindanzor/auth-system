@@ -1,6 +1,6 @@
 import { decodeJwt } from "jose";
 
-export function decodeUserFromToken<T extends Record<string, unknown>>(
+export function decodeUserFromToken<T extends object>(
   token: string | null,
 ): T | null {
   if (!token) return null;

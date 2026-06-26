@@ -36,7 +36,7 @@ Application
 pnpm add frontend-core
 ```
 
-Peer dependencies: `react`, `react-dom`, `axios`, `zustand`, `@tanstack/react-query`, `jose`.
+Peer dependencies: `react`, `react-dom`, `axios`, `zustand`, `jose`.
 
 ### Auth Store
 

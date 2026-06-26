@@ -1,12 +1,19 @@
-import type { AuthTokens, AuthApiResponse } from "../api/types";
+import axios from "axios";
+import type { AuthApiResponse, AuthTokens } from "../api/types";
+import { ForbiddenError } from "../errors";
 
-export interface IAuthService {
-  login(payload: { credentials: string; password: string }): Promise<string>;
-  register(payload: Record<string, unknown>): Promise<string>;
+export interface IAuthService<
+  TLogin extends object,
+  TRegister extends object,
+  TResetPassword extends object,
+  TRequestPasswordReset extends object,
+> {
+  login(payload: TLogin): Promise<string>;
+  register(payload: TRegister): Promise<string>;
   logout(): Promise<void>;
   refresh(): Promise<string>;
-  requestPasswordReset?(email: string): Promise<void>;
-  resetPassword?(payload: { password: string; access: string }): Promise<void>;
+  requestPasswordReset?(payload: TRequestPasswordReset): Promise<void>;
+  resetPassword?(payload: TResetPassword): Promise<void>;
 }
 
 export type AuthServiceOptions = {
@@ -16,23 +23,29 @@ export type AuthServiceOptions = {
     register: string;
     logout: string;
     refresh: string;
+    requestPasswordReset?: string;
+    resetPassword?: string;
   };
   getAccessToken?: () => string | null;
 };
 
-export function createAuthService(options: AuthServiceOptions): IAuthService {
-  const { baseUrl, endpoints } = options;
+class AuthService<
+  TLogin extends object,
+  TRegister extends object,
+  TResetPassword extends object,
+  TRequestPasswordReset extends object,
+> {
+  constructor(private options: AuthServiceOptions) {}
 
-  async function request<T>(
+  private async request<T>(
     url: string,
-    body?: Record<string, unknown>,
+    body?: object,
     method: "post" | "get" = "post",
   ): Promise<T> {
-    const axios = (await import("axios")).default;
-    const token = options.getAccessToken?.() ?? null;
+    const token = this.options.getAccessToken?.() ?? null;
 
     const response = await axios.request<AuthApiResponse<T>>({
-      baseURL: baseUrl,
+      baseURL: this.options.baseUrl,
       url,
       method,
       data: body,
@@ -45,32 +58,60 @@ export function createAuthService(options: AuthServiceOptions): IAuthService {
     return response.data as T;
   }
 
-  return {
-    async login(payload) {
-      const tokens = await request<AuthTokens>(endpoints.login, payload);
-      return tokens.accessToken;
-    },
+  async login(payload: TLogin) {
+    const tokens = await this.request<AuthTokens>(
+      this.options.endpoints.login,
+      payload,
+    );
+    return tokens.accessToken;
+  }
 
-    async register(payload) {
-      const tokens = await request<AuthTokens>(endpoints.register, payload);
-      return tokens.accessToken;
-    },
+  async register(payload: TRegister) {
+    const tokens = await this.request<AuthTokens>(
+      this.options.endpoints.register,
+      payload,
+    );
+    return tokens.accessToken;
+  }
 
-    async logout() {
-      await request(endpoints.logout, undefined, "get");
-    },
+  async logout() {
+    await this.request(this.options.endpoints.logout, undefined, "get");
+  }
 
-    async refresh() {
-      const tokens = await request<AuthTokens>(endpoints.refresh, undefined, "get");
-      return tokens.accessToken;
-    },
+  async refresh() {
+    const tokens = await this.request<AuthTokens>(
+      this.options.endpoints.refresh,
+      undefined,
+      "get",
+    );
+    return tokens.accessToken;
+  }
 
-    async requestPasswordReset(email) {
-      await request(endpoints.requestPasswordReset ?? "/auth/request-password-reset", { email });
-    },
+  async requestPasswordReset(payload: TRequestPasswordReset) {
+    if (!this.options.endpoints.requestPasswordReset)
+      throw new ForbiddenError("Request password reset endpoint not defined");
+    await this.request(this.options.endpoints.requestPasswordReset, payload);
+  }
 
-    async resetPassword(payload) {
-      await request(endpoints.resetPassword ?? "/auth/reset-password", payload);
-    },
-  };
+  async resetPassword(payload: TResetPassword) {
+    if (!this.options.endpoints.resetPassword)
+      throw new ForbiddenError("Reset password endpoint not defined");
+    await this.request(this.options.endpoints.resetPassword, payload);
+  }
+}
+
+export function createAuthService<
+  TLogin extends object,
+  TRegister extends object,
+  TResetPassword extends object,
+  TRequestPasswordReset extends object,
+>(
+  options: AuthServiceOptions,
+): IAuthService<TLogin, TRegister, TResetPassword, TRequestPasswordReset> {
+  return new AuthService<
+    TLogin,
+    TRegister,
+    TResetPassword,
+    TRequestPasswordReset
+  >(options);
 }

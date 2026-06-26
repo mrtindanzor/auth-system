@@ -1,3 +1,3 @@
-export { createAuthAxiosClient, attachTokenRefreshInterceptor } from "./client";
+export { createAuthAxiosClient } from "./client";
 export type { AuthApiConfig } from "./client";
-export type { AuthEndpoints, AuthTokens, AuthApiResponse } from "./types";
+export type { AuthApiResponse, AuthEndpoints, AuthTokens } from "./types";

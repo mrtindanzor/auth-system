@@ -12,7 +12,4 @@ export type AuthTokens = {
   refreshToken?: string;
 };
 
-export type AuthApiResponse<T = AuthTokens> = {
-  message: string;
-  status: number;
-} & T;
+export type AuthApiResponse<T> = T & AuthTokens;
