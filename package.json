@@ -1,10 +1,18 @@
 {
-	"scripts": {
-		"format": "pnpm -r format",
-		"lint": "pnpm -r lint",
-		"publish": "pnpm -r publish"
-	},
-	"devDependencies": {
-		"@changesets/cli": "^2.31.0"
-	}
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrtindanzor/auth-system"
+  },
+  "homepage": "https://github.com/mrtindanzor/auth-system",
+  "bugs": {
+    "url": "https://github.com/mrtindanzor/auth-system/issues"
+  },
+  "scripts": {
+    "format": "pnpm -r format",
+    "lint": "pnpm -r lint",
+    "publish": "pnpm -r publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0"
+  }
 }
