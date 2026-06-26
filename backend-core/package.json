@@ -1,6 +1,6 @@
 {
 	"name": "@tindanzor/auth-server",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": false,
 	"type": "module",
 	"main": "./dist/index.js",
@@ -22,8 +22,8 @@
 		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
-		"jose": "^5.0.0",
-		"bcrypt": "^5.0.0"
+		"bcrypt": "^5.0.0",
+		"jose": "^5.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.1",
