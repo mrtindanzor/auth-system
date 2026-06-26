@@ -1,8 +1,8 @@
-# frontend-core
+# `@tindanzor-solutions/auth/client`
 
 Authentication framework for frontend applications.
 
-Extracted from MyGhMart's authentication system. Provides auth store, JWT decode, login/register/logout/refresh, route guards, current user context, and auth API client.
+Extracted from MyGhMart's authentication system. Provides auth store, JWT decode, login/register/logout/refresh/password-reset, route guards, user store, auth hooks, and an auth API client.
 
 ## Scope
 
@@ -14,18 +14,17 @@ If a module would still exist without authentication in the application, it does
 
 ```
 Application
-  └── frontend-core (authentication framework)
-        ├── api/client.ts       Auth axios instance + refresh interceptor
+  └── @tindanzor-solutions/auth/client (authentication framework)
+        ├── api/client.ts       Auth axios instance
         ├── api/types.ts        Auth endpoint + token types
-        ├── auth/store.ts       Zustand auth store (access token)
-        ├── auth/tokens.ts      JWT decode utility
-        ├── auth/service.ts     Auth service factory (login, register, refresh, logout)
+        ├── auth/store.ts       Zustand auth store (access token, refresh state)
+        ├── auth/tokens.ts      JWT decode utility (strips JWT claims)
+        ├── auth/service.ts     Auth service (login, register, refresh, logout, password reset)
         ├── auth/middleware.ts   Route guard factory
-        ├── auth/hooks.ts       useAuthRefresh, useAuth hooks
+        ├── auth/hooks/         useAuth, useAuthRefresh, useAuthService
         ├── user/store.ts       Zustand user store (decoded from JWT)
-        ├── user/context.tsx     UserProvider + useUser context
-        ├── errors/             UnauthorizedError
-        └── utils/              tryCatch, fe
+        ├── errors/             AppError, UnauthorizedError, ForbiddenError
+        └── utils/              tryCatch, syncTryCatch, fe
 ```
 
 ## Usage
@@ -33,17 +32,58 @@ Application
 ### Installation
 
 ```bash
-pnpm add frontend-core
+pnpm add @tindanzor-solutions/auth/client
 ```
 
-Peer dependencies: `react`, `react-dom`, `axios`, `zustand`, `jose`.
+Peer dependencies: `react` (^19), `react-dom` (^19), `axios` (^1), `zustand` (^5), `jose` (^5).
 
-### Auth Store
+### Quick Setup — `createAuthClient`
+
+For most apps, the easiest entry point is `createAuthClient`. It wires together the auth store, user store, service, and hooks in a single call.
 
 ```typescript
-import { createAuthStore } from "frontend-core";
+import { createAuthClient } from "@tindanzor-solutions/auth/client";
 
-// Create once at app root
+type AppUser = { id: string; name: string; email: string };
+type LoginPayload = { credentials: string; password: string };
+type RegisterPayload = { name: string; email: string; password: string };
+
+export const {
+  useAuthStore,
+  useAuthService,
+  useUserStore,
+  useAuth,
+  authGuard,
+  useAuthRefresh,
+} = createAuthClient<AppUser, LoginPayload, RegisterPayload>(
+  {
+    baseUrl: "https://api.example.com",
+    endpoints: {
+      login: "/auth/login",
+      register: "/auth/register",
+      logout: "/auth/logout",
+      refresh: "/auth/refresh",
+    },
+  },
+  {
+    protectedPaths: ["/profile", "/dashboard"],
+    authPaths: ["/signin", "/signup"],
+    isAuthenticated: () => useAuthStore.getState().isLoggedIn,
+    onUnauthenticated: (path) => { /* redirect to /signin */ },
+    onAuthenticated: () => { /* redirect to / */ },
+  },
+);
+```
+
+### Lower-level Building Blocks
+
+You can also compose the pieces manually if you need more control.
+
+#### Auth Store
+
+```typescript
+import { createAuthStore } from "@tindanzor-solutions/auth/client";
+
 const useAuthStore = createAuthStore();
 
 // After login
@@ -51,16 +91,17 @@ useAuthStore.getState().setAccessToken(accessToken);
 
 // Check state
 const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+const hasRefreshed = useAuthStore((s) => s.hasRefreshed);
 const token = useAuthStore((s) => s.getAccessToken());
 
 // On logout
 useAuthStore.getState().logout();
 ```
 
-### Auth Service
+#### Auth Service
 
 ```typescript
-import { createAuthService } from "frontend-core";
+import { createAuthService } from "@tindanzor-solutions/auth/client";
 
 const authService = createAuthService({
   baseUrl: "https://api.example.com",
@@ -69,69 +110,58 @@ const authService = createAuthService({
     register: "/auth/register",
     logout: "/auth/logout",
     refresh: "/auth/refresh",
+    requestPasswordReset: "/auth/request-password-reset", // optional
+    resetPassword: "/auth/reset-password",                 // optional
   },
   getAccessToken: () => useAuthStore.getState().accessToken,
 });
 
 // Login
-const accessToken = await authService.login({
-  credentials: "user@example.com",
-  password: "mypassword",
-});
+const accessToken = await authService.login({ credentials: "user@example.com", password: "mypassword" });
 
 // Refresh
 const newToken = await authService.refresh();
+
+// Password reset
+await authService.requestPasswordReset?.({ email: "user@example.com" });
+await authService.resetPassword?.({ token: "...", password: "newpass" });
 ```
 
-### JWT Decode
+#### JWT Decode
 
 ```typescript
-import { decodeUserFromToken } from "frontend-core";
+import { decodeUserFromToken } from "@tindanzor-solutions/auth/client";
 
 type AppUser = { id: string; name: string; email: string };
 const user = decodeUserFromToken<AppUser>(accessToken);
+// Strips standard JWT claims (iat, exp, iss, aud, sub, jti, nbf)
 ```
 
-### User Store
+#### User Store
 
 ```typescript
-import { createUserStore } from "frontend-core";
+import { createUserStore } from "@tindanzor-solutions/auth/client";
 
 type AppUser = { id: string; name: string; email: string };
 const useUserStore = createUserStore<AppUser>();
 
-// Set user after login
+// Set user from token after login
 useUserStore.getState().setUser(accessToken);
 
 // Read user
 const user = useUserStore((s) => s.user);
+
+// Update a single field
+useUserStore.getState().updateUser("name", "New Name");
+
+// Clear
+useUserStore.getState().clearUser();
 ```
 
-### User Context
+#### Route Guards
 
 ```typescript
-import { createUserContext } from "frontend-core";
-
-type AppUser = { id: string; name: string; email: string };
-const { UserProvider, useUser, useOptionalUser } = createUserContext<AppUser>();
-
-// Root layout
-<UserProvider
-  getUser={() => useUserStore.getState().user}
-  subscribe={(listener) => useUserStore.subscribe(listener)}
-  fallback={<Loading />}
->
-  <App />
-</UserProvider>
-
-// In components
-const user = useUser(); // AppUser or throws
-```
-
-### Route Guards
-
-```typescript
-import { createAuthGuard } from "frontend-core";
+import { createAuthGuard } from "@tindanzor-solutions/auth/client";
 
 const guard = createAuthGuard({
   protectedPaths: ["/profile", "/dashboard"],
@@ -141,48 +171,64 @@ const guard = createAuthGuard({
   onAuthenticated: () => { /* redirect to / */ },
 });
 
-// Call in route loader / middleware
+// Methods
 guard.enforce("/profile/settings");
+guard.assertAuthenticated("/profile/settings");
+guard.assertNotAuthenticated("/signin");
 ```
 
-### Auth Hooks
+#### Auth Hooks
 
 ```typescript
-import { createUseAuthRefresh, createUseAuth } from "frontend-core";
+import { createUseAuthService, createUseAuthRefresh, createUseAuth } from "@tindanzor-solutions/auth/client";
 
-const useAuthRefresh = createUseAuthRefresh(
-  () => useAuthStore,
-  () => authService,
-);
+// 1. Service hook (memoises auth service with token getter)
+const useAuthService = createUseAuthService(useAuthStore, {
+  baseUrl: "https://api.example.com",
+  endpoints: { /* ... */ },
+});
 
-const useAuth = createUseAuth<AppUser>(
-  () => useAuthStore,
-  () => authService,
-  (accessToken) => useUserStore.getState().setUser(accessToken),
-);
+// 2. Refresh hook (silently refreshes token on mount)
+const useAuthRefresh = createUseAuthRefresh(useAuthStore, useUserStore, useAuthService);
 
-// In component:
-useAuthRefresh(); // Silently refresh token on mount
+// 3. Auth hook (login, register, logout + updates stores)
+type AppUser = { id: string; name: string; email: string };
+const useAuth = createUseAuth<AppUser>(useAuthStore, useUserStore, useAuthService);
+
+// --- In component ---
+useAuthRefresh(); // Attempt token refresh on mount
 
 const { login, register, logout } = useAuth();
 await login({ credentials: "email", password: "pass" });
 ```
 
-### API Client + Refresh Interceptor
+#### API Client
 
 ```typescript
-import { createAuthAxiosClient, attachTokenRefreshInterceptor } from "frontend-core";
+import { createAuthAxiosClient } from "@tindanzor-solutions/auth/client";
 
 const axios = createAuthAxiosClient({
   baseUrl: "https://api.example.com",
   getAccessToken: () => useAuthStore.getState().accessToken,
+  withCredentials: true, // default: true
 });
+```
 
-attachTokenRefreshInterceptor(
-  axios,
-  () => authService.refresh(),      // on 401, try refresh
-  () => useAuthStore.getState().logout(), // on refresh fail
-);
+#### Utilities
+
+```typescript
+import { tryCatch, syncTryCatch, fe } from "@tindanzor-solutions/auth/client";
+
+const [data, error] = await tryCatch(fetch("/api"));
+const [result, err] = syncTryCatch(() => JSON.parse(raw));
+
+const message = fe(error); // "Something went wrong" (fallback)
+```
+
+#### Error Types
+
+```typescript
+import { AppError, UnauthorizedError, ForbiddenError } from "@tindanzor-solutions/auth/client";
 ```
 
 ## Configuration Over Modification
@@ -193,6 +239,4 @@ Applications supply:
 - **Access token getter** for API requests
 - **Auth store** for token state
 - **User store** for decoded user state
-- **User store subscriber** for context reactivity
 - **Protected/auth path lists** for route guards
-- **Refresh fail handler** for token refresh interceptor
