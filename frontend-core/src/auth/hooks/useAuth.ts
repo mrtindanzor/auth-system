@@ -1,6 +1,8 @@
 import { useCallback } from "react";
+import { type Resolver, useForm } from "react-hook-form";
 import type { StoreApi, UseBoundStore } from "zustand";
 import type { UserStore } from "../../user";
+import { fe, tryCatch } from "../../utils";
 import type { IAuthService } from "../service";
 import type { AuthStore } from "../store";
 
@@ -20,35 +22,61 @@ export function createUseAuth<
     TRequestPasswordReset
   >,
 ) {
-  return function useAuth() {
-    const setAccessToken = useAuthStore((s) => s.setAccessToken);
-    const setUser = useUserStore((s) => s.setUser);
+  function useSignin(props?: { resolver?: Resolver<TLogin> }) {
+    const { register, handleSubmit, formState, reset, setError } =
+      useForm<TLogin>(props);
     const authService = useAuthService();
 
-    const login = useCallback(
-      async (payload: TLogin) => {
-        const accessToken = await authService.login(payload);
-        setAccessToken(accessToken);
-        setUser(accessToken);
-      },
-      [authService, setAccessToken, setUser],
-    );
+    const onSubmit = handleSubmit(async (details) => {
+      const [res, error] = await tryCatch(authService.login(details));
+      if (error) {
+        return setError("root", {
+          message: fe(error),
+        });
+      }
 
-    const register = useCallback(
-      async (payload: TRegister) => {
-        const accessToken = await authService.register(payload);
-        setAccessToken(accessToken);
-        setUser(accessToken);
-      },
-      [authService, setAccessToken, setUser],
-    );
+      useAuthStore.getState().setAccessToken(res);
+      useUserStore.getState().setUser(res);
 
+      reset();
+    });
+
+    return { register, formState, onSubmit };
+  }
+
+  function useSignup(props?: { resolver?: Resolver<TRegister> }) {
+    const { register, handleSubmit, formState, reset, setError } =
+      useForm<TRegister>(props);
+    const authService = useAuthService();
+
+    const onSubmit = handleSubmit(async (details) => {
+      const [res, error] = await tryCatch(authService.register(details));
+      if (error) {
+        return setError("root", {
+          message: fe(error),
+        });
+      }
+
+      useAuthStore.getState().setAccessToken(res);
+      useUserStore.getState().setUser(res);
+
+      reset();
+    });
+
+    return { register, formState, onSubmit };
+  }
+
+  function useLogout() {
+    const authService = useAuthService();
     const logout = useCallback(async () => {
-      await authService.logout();
-      setAccessToken(null);
-      setUser(null);
-    }, [authService, setAccessToken, setUser]);
+      const [, error] = await tryCatch(authService.logout());
+      if (!error) {
+        useAuthStore.getState().setAccessToken(null);
+        useUserStore.getState().setUser(null);
+      }
+    }, [authService]);
+    return { logout };
+  }
 
-    return { login, register, logout };
-  };
+  return { useSignin, useSignup, useLogout };
 }
