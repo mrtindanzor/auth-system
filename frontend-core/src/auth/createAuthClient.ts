@@ -28,7 +28,11 @@ export function createAuthClient<
     TResetPassword,
     TRequestPasswordReset
   >(useAuthStore, options);
-  const useAuth = createUseAuth(useAuthStore, useUserStore, useAuthService);
+  const { useLogout, useSignin, useSignup } = createUseAuth(
+    useAuthStore,
+    useUserStore,
+    useAuthService,
+  );
   const useAuthRefresh = createUseAuthRefresh(
     useAuthStore,
     useUserStore,
@@ -39,7 +43,9 @@ export function createAuthClient<
     useAuthStore,
     useAuthService,
     useUserStore,
-    useAuth,
+    useLogout,
+    useSignin,
+    useSignup,
     authGuard,
     useAuthRefresh,
   };
