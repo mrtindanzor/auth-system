@@ -7,22 +7,32 @@ export type AuthGuardConfig = {
   onAuthenticated: (currentPath?: string) => void;
 };
 
-export function createAuthGuard(config: AuthGuardConfig) {
-  const isAuthencticated = (runtime: "client" | "server") =>
-    runtime === "server" && config.isAuthenticatedServer
-      ? config.isAuthenticatedServer
-      : config.isAuthenticated;
+export function createAuthGuard({
+  onAuthenticated,
+  onUnauthenticated,
+  isAuthenticated,
+  isAuthenticatedServer,
+  protectedPaths,
+  authPaths,
+}: AuthGuardConfig) {
+  const getIsAuthenticated = async (runtime: "client" | "server") => {
+    const isAuthenticatedFn =
+      runtime === "server" && isAuthenticatedServer
+        ? isAuthenticatedServer
+        : isAuthenticated;
+
+    return await isAuthenticatedFn();
+  };
 
   async function assertAuthenticated(
     pathname: string,
     runtime?: "client" | "server",
   ) {
-    const isProtected = config.protectedPaths.some((p) =>
-      pathname.startsWith(p),
-    );
+    const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
+    const authenticated = await getIsAuthenticated(runtime || "client");
 
-    if (isProtected && (await isAuthencticated(runtime || "client")())) {
-      config.onUnauthenticated(pathname);
+    if (isProtected && !authenticated) {
+      return onUnauthenticated(pathname);
     }
   }
 
@@ -30,9 +40,11 @@ export function createAuthGuard(config: AuthGuardConfig) {
     pathname: string,
     runtime?: "client" | "server",
   ) {
-    const isAuthPage = config.authPaths.some((p) => pathname.startsWith(p));
-    if (isAuthPage && (await isAuthencticated(runtime || "client")())) {
-      config.onAuthenticated(pathname);
+    const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
+    const authenticated = await getIsAuthenticated(runtime || "client");
+
+    if (isAuthPage && authenticated) {
+      return onAuthenticated(pathname);
     }
   }
 
