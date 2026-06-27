@@ -5,11 +5,11 @@ type User = { email: string; name: string };
 type LoginProps = { email: string; password: string };
 type Register = { email: string; name: string; password: string };
 
-const {
-  useAuth: _u,
-  useAuthRefresh,
-  useAuthStore,
-} = createAuthClient<User, LoginProps, Register>(
+const { useAuthRefresh, useAuthStore } = createAuthClient<
+  User,
+  LoginProps,
+  Register
+>(
   {
     baseUrl: "http://localhost:8000",
     endpoints: {
