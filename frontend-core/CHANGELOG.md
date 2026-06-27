@@ -1,5 +1,11 @@
 # @tindanzor/auth-client
 
+## 0.1.5
+
+### Patch Changes
+
+- 108be38: Fixed: assertAuthenticated and assertUnauthenticated to redirect correctly
+
 ## 0.1.4
 
 ### Patch Changes
