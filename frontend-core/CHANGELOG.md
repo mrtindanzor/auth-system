@@ -1,5 +1,11 @@
 # @tindanzor/auth-client
 
+## 0.3.0
+
+### Minor Changes
+
+- 7a9883f: Updated the endpoints config method to receive request method
+
 ## 0.2.0
 
 ### Minor Changes
