@@ -1,5 +1,13 @@
 # @tindanzor/auth-client
 
+## 0.2.0
+
+### Minor Changes
+
+- 2c76237: Added:
+  Integrate react-hook-form for complete auth flow and auth state
+  c
+
 ## 0.1.5
 
 ### Patch Changes

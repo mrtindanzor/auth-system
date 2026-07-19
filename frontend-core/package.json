@@ -1,52 +1,52 @@
 {
-	"name": "@tindanzor/auth-client",
-	"version": "0.1.5",
-	"private": false,
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/mrtindanzor/auth-system"
-	},
-	"homepage": "https://github.com/mrtindanzor/auth-system",
-	"bugs": {
-		"url": "https://github.com/mrtindanzor/auth-system/issues"
-	},
-	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js"
-		}
-	},
-	"files": [
-		"dist"
-	],
-	"scripts": {
-		"dev": "vite",
-		"lint": "biome check src/ && tsc --noEmit",
-		"lint:fix": "biome check --write src/ && tsc --noEmit",
-		"format": "biome check --write src/",
-		"build": "tsc",
-		"prepublishOnly": "pnpm build && tsc-alias --resolve-full-paths"
-	},
-	"dependencies": {
-		"jose": "^5.0.0",
-		"zustand": "^5.0.0"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.5.1",
-		"@types/react": "^19.0.0",
-		"@types/react-dom": "^19.0.0",
-		"@vitejs/plugin-react": "^6.0.3",
-		"tsc-alias": "^1.8.17",
-		"typescript": "^6.0.3",
-		"vite": "^8.1.0"
-	},
-	"peerDependencies": {
-		"react-hook-form": "^7.80.0",
-		"axios": "^1.0.0",
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0"
-	}
+  "name": "@tindanzor/auth-client",
+  "version": "0.2.0",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrtindanzor/auth-system"
+  },
+  "homepage": "https://github.com/mrtindanzor/auth-system",
+  "bugs": {
+    "url": "https://github.com/mrtindanzor/auth-system/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "lint": "biome check src/ && tsc --noEmit",
+    "lint:fix": "biome check --write src/ && tsc --noEmit",
+    "format": "biome check --write src/",
+    "build": "tsc",
+    "prepublishOnly": "pnpm build && tsc-alias --resolve-full-paths"
+  },
+  "dependencies": {
+    "jose": "^5.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.3",
+    "tsc-alias": "^1.8.17",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0"
+  },
+  "peerDependencies": {
+    "react-hook-form": "^7.80.0",
+    "axios": "^1.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
 }
