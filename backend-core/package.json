@@ -29,7 +29,7 @@
     "build": "tsc && tsc-alias --resolve-full-paths",
     "prepublishOnly": "pnpm build"
   },
-  "peer-dependencies": {
+  "dependencies": {
     "bcrypt": "^6.0.0",
     "jose": "^5.0.0",
 
