@@ -6,6 +6,7 @@ import type {
 	IUserRepository,
 } from "./user/user.contracts.types";
 import { UserService } from "./user/user.service";
+import { getBearerToken } from "./utils/getBearerToken";
 
 export type { IAuthService } from "./auth/auth.contracts.types";
 export { AuthService } from "./auth/auth.service";
@@ -20,12 +21,18 @@ export {
 	clearAuthCookie,
 	createAuthCookie,
 } from "./cookie";
+export {
+	AppError,
+	ForbiddenError,
+	NotFoundError,
+	UnauthorizedError,
+	ValidationError,
+} from "./errors";
 export type {
 	IUserAccount,
 	IUserService,
 } from "./user/user.contracts.types";
-
-import { getBearerToken } from "./utils/getBearerToken";
+export type { IUserRepository };
 
 export type AuthenticationServiceProps<TUser extends IUserAccount> = {
 	userRepo: IUserRepository<TUser>;
