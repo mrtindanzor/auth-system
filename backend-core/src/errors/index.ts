@@ -1,1 +1,0 @@
-export { UnauthorizedError } from "./errors";
