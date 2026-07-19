@@ -20,9 +20,6 @@ importers:
       jose:
         specifier: ^5.0.0
         version: 5.10.0
-      zod:
-        specifier: ^3.22.0
-        version: 3.25.76
     devDependencies:
       '@biomejs/biome':
         specifier: 2.5.1
@@ -1029,9 +1026,6 @@ packages:
     engines: {node: '>= 8'}
     hasBin: true
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zustand@5.0.14:
     resolution: {integrity: sha512-/8tAspM5LMPr28b3fwLYrtdj77ECpfZviaP75CMTnwO8ISyaE4GDIG/9rDDYq/cH9D2Xw2A2RXglLInmVBQB/g==}
     engines: {node: '>=12.20.0'}
@@ -1917,8 +1911,6 @@ snapshots:
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
-
-  zod@3.25.76: {}
 
   zustand@5.0.14(@types/react@19.2.17)(react@19.2.7):
     optionalDependencies:
