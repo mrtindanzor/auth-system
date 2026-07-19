@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.0.1
+
+### Patch Changes
+
+- 8bb424f: update the package documentation
+
 ## 2.0.0
 
 ### Major Changes
