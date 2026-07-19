@@ -23,9 +23,11 @@
     "dist"
   ],
   "scripts": {
-    "lint": "biome check src/",
-    "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "lint": "biome check src/ && tsc --noEmit",
+    "lint:fix": "biome check --write src/ && tsc --noEmit",
+    "format": "biome check --write src/",
+    "build": "tsc && tsc-alias --resolve-full-paths",
+    "prepublishOnly": "pnpm build"
   },
   "peer-dependencies": {
     "bcrypt": "^6.0.0",
