@@ -1,3 +1,3 @@
 export function getBearerToken(bearer: string | null) {
-  return bearer?.split(" ")[1] ?? "";
+	return bearer?.split(" ")[1] ?? "";
 }
