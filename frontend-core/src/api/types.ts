@@ -1,15 +1,15 @@
 export type AuthEndpoints = {
-  login: string;
-  register: string;
-  logout: string;
-  refresh: string;
-  requestPasswordReset?: string;
-  resetPassword?: string;
+	login: string;
+	register: string;
+	logout: string;
+	refresh: string;
+	requestPasswordReset?: string;
+	resetPassword?: string;
 };
 
 export type AuthTokens = {
-  accessToken: string;
-  refreshToken?: string;
+	accessToken: string;
+	refreshToken?: string;
 };
 
 export type AuthApiResponse<T> = T & AuthTokens;
