@@ -1,5 +1,11 @@
 # @tindanzor/auth-client
 
+## 0.3.1
+
+### Patch Changes
+
+- 8bb424f: update the package documentation
+
 ## 0.3.0
 
 ### Minor Changes
