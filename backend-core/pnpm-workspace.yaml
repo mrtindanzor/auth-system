@@ -1,5 +1,0 @@
-allowBuilds:
-  bcrypt: false
-
-packages:
-  - "."

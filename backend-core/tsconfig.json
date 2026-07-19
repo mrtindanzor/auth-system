@@ -1,9 +1,10 @@
 {
-	"compilerOptions": {
-		"noEmit": false,
-		"declaration": true,
-		"outDir": "./dist",
-		"rootDir": "./src"
-	},
-	"include": ["src"]
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src"]
 }

@@ -1,1 +1,0 @@
-export { getBearerToken } from "./getBearerToken";
