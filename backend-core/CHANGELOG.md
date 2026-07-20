@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.1.1
+
+### Patch Changes
+
+- ddf5870: Fixed role undefinded errors
+
 ## 2.1.0
 
 ### Minor Changes
