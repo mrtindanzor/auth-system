@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.3.1
+
+### Patch Changes
+
+- d05c29c: Fixed: Protected access token signing
+
 ## 2.3.0
 
 ### Minor Changes
