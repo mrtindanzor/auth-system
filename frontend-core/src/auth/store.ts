@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { IUserAccount, RoleChecker } from "../api/types";
 import { roleBuilder } from "../utils/auth.roles";
+import { decodeUserFromToken } from "./tokens";
 
 export type AuthState = {
 	accessToken: string | null;
@@ -15,7 +16,6 @@ export type AuthActions<
 	setAccessToken: (accessToken: string | null) => void;
 	getAccessToken: () => string | null;
 	logout: () => void;
-	setRoles: (roles: TRoles | null) => void;
 	roles: TRoles;
 	roleChecker: ReturnType<RoleChecker<TUser>>;
 };
@@ -30,10 +30,13 @@ export function createAuthStore<TUser extends IUserAccount>() {
 		hasRefreshed: false,
 
 		setAccessToken(accessToken) {
+			const roles = decodeUserFromToken<TUser>(accessToken)?.roles;
+
 			set({
 				isLoggedIn: !!accessToken,
 				accessToken,
 				hasRefreshed: true,
+				roles: Array.isArray(roles) ? roles : [],
 			});
 		},
 
@@ -48,9 +51,6 @@ export function createAuthStore<TUser extends IUserAccount>() {
 			});
 		},
 		roles: [],
-		setRoles(roles) {
-			set({ roles: roles || [] });
-		},
 		roleChecker: roleBuilder(get().roles, []),
 	}));
 }

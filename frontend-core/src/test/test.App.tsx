@@ -4,7 +4,7 @@ import { createAuthClient } from "../index";
 type User = {
 	email: string;
 	name: string;
-	roles: ("admin" | "user" | "developer")[];
+	roles: ("developer" | "admin" | "user" | "guest")[];
 };
 type LoginProps = { email: string; password: string };
 type Register = { email: string; name: string; password: string };
