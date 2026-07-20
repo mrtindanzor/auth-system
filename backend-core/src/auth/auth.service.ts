@@ -115,7 +115,7 @@ export class AuthService<
 		const resetToken = await this.getToken(
 			{ userId: user.id, hash: user.password },
 			"10m",
-			this.config.getPasswordResetToken(""),
+			this.config.getPasswordResetToken(user.password),
 		);
 		return resetToken;
 	}
@@ -151,7 +151,7 @@ export class AuthService<
 		const access = await this.getToken(
 			{ id },
 			"10m",
-			this.config.getRegistrationSecret(""),
+			this.config.getRegistrationSecret(id),
 		);
 		return `${url}?access=${access}`;
 	}
