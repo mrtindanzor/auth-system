@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 import { createAuthClient } from "../index";
 
-type User = { email: string; name: string };
+type User = {
+	email: string;
+	name: string;
+	roles: ("admin" | "user" | "developer")[];
+};
 type LoginProps = { email: string; password: string };
 type Register = { email: string; name: string; password: string };
 
