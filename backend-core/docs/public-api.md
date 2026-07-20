@@ -6,7 +6,7 @@ This page documents all exports from `@tindanzor/auth-server`.
 
 ### `createAuthenticationService`
 
-The primary entry point. Wires together a `UserService` and `AuthService`, and returns both along with a Bearer token extraction utility.
+The primary entry point. Wires together a `UserService` and `AuthService`, and returns both along with a Bearer token extraction utility and cookie utilities.
 
 ```typescript
 function createAuthenticationService<
@@ -17,6 +17,10 @@ function createAuthenticationService<
   userService: UserService<TUser>;
   authService: AuthService<TUser, TSignupProps, TSigninProps>;
   getBearerToken: (bearer: string | null) => string;
+  cookieUtils: {
+    setCookie: SetCookieResult;
+    clearCookie: ClearCookieResult;
+  };
 }
 ```
 
@@ -34,15 +38,21 @@ function createAuthenticationService<
 |---|---|---|
 | `userRepo` | `IUserRepository<TUser>` | Your repository implementation |
 | `secretsConfig` | `AuthSecretsConfig` | Created by `createAuthConfig` |
+| `cookieConfig` | `AuthCookieConfig` | Cookie configuration (name, maxAge, secure, sameSite, etc.) |
 
 **Example:**
 
 ```typescript
 import { createAuthenticationService } from "@tindanzor/auth-server";
 
-const { authService, userService, getBearerToken } = createAuthenticationService({
+const { authService, userService, getBearerToken, cookieUtils } = createAuthenticationService({
   userRepo: new MyUserRepository(),
   secretsConfig,
+  cookieConfig: {
+    name: "auth",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  },
 });
 ```
 
@@ -97,26 +107,23 @@ config.getRegistrationSecret(skeleton.password);  // Uint8Array
 Creates a data structure for setting a refresh token as an httpOnly cookie. Returns a `SetCookieResult` — your application applies it to the HTTP response.
 
 ```typescript
-function createAuthCookie(config: {
-  token: string;
-  name?: string;           // Default: "auth"
-  isProduction: boolean;
-  baseDomain: string;
-  path?: string;           // Default: "/"
-  maxAgeInMins?: number;   // Default: 4320 (3 days)
-}): SetCookieResult
+function createAuthCookie(config: AuthCookieConfig & Partial<Omit<SetCookieResult["options"], "maxAge">>): SetCookieResult
 ```
 
-**Returns:** `{ name, value, options }` where `options` includes `httpOnly`, `secure`, `sameSite`, `maxAge`, `domain`, `path`, `signed`.
+**Parameters:**
 
-**Environment Behavior:**
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `name` | `string` | `"auth"` | Cookie name |
+| `maxAgeInMins` | `number` | `4320` (3 days) | Cookie lifetime in minutes |
+| `signed` | `boolean` | `false` | Whether the cookie is signed |
+| `secure` | `boolean` | `true` | Whether the cookie requires HTTPS |
+| `path` | `string` | `"/"` | Cookie path |
+| `httpOnly` | `boolean` | `true` | Whether the cookie is httpOnly |
+| `domain` | `string` | `undefined` | Cookie domain (prefixed with `.` if set) |
+| `sameSite` | `"none" \| "lax" \| "strict"` | `"none"` | SameSite attribute |
 
-| Setting | Development | Production |
-|---|---|---|
-| `domain` | `undefined` | `.{baseDomain}` |
-| `secure` | `false` | `true` |
-| `sameSite` | `"lax"` | `"none"` |
-| `httpOnly` | `true` | `true` |
+**Returns:** `{ name, options }` where `options` includes `httpOnly`, `secure`, `sameSite`, `maxAge`, `domain`, `path`, `signed`.
 
 **Example:**
 
@@ -124,39 +131,36 @@ function createAuthCookie(config: {
 import { createAuthCookie } from "@tindanzor/auth-server";
 
 const cookie = createAuthCookie({
-  token: refreshToken,
-  isProduction: process.env.NODE_ENV === "production",
-  baseDomain: "example.com",
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  domain: "example.com",
 });
 
 // Apply to your response (framework-specific)
-res.cookie(cookie.name, cookie.value, cookie.options);
+res.cookie(cookie.name, refreshToken, cookie.options);
 ```
 
 ---
 
-### `clearAuthCookie`
+### `cookieUtils`
 
-Creates a data structure for clearing the auth cookie on logout.
+Returned by `createAuthenticationService`, provides pre-configured cookie utilities based on the `cookieConfig` passed during initialization.
 
 ```typescript
-function clearAuthCookie(config?: {
-  name?: string;    // Default: "auth"
-  path?: string;    // Default: "/"
-}): ClearCookieResult
+cookieUtils.setCookie: SetCookieResult   // { name, options } for setting the cookie
+cookieUtils.clearCookie: ClearCookieResult // { name, options } for clearing the cookie
 ```
-
-**Returns:** `{ name, options }` where `options` includes `signed`, `path`, `httpOnly`.
 
 **Example:**
 
 ```typescript
-import { clearAuthCookie } from "@tindanzor/auth-server";
+const { cookieUtils } = createAuthenticationService({ userRepo, secretsConfig, cookieConfig });
 
-const clearCookie = clearAuthCookie();
+// Set cookie
+res.cookie(cookieUtils.setCookie.name, refreshToken, cookieUtils.setCookie.options);
 
-// Apply to your response (framework-specific)
-res.clearCookie(clearCookie.name, clearCookie.options);
+// Clear cookie (on logout)
+res.clearCookie(cookieUtils.clearCookie.name, cookieUtils.clearCookie.options);
 ```
 
 ---
@@ -187,7 +191,7 @@ class AuthService<
 | `resetPassword` | `(password: string, access: string) => Promise<TUser \| null>` | Validates reset token against current password hash, then updates password. |
 | `getRegistrationAccessUrl` | `(url: string) => Promise<string>` | Creates a skeleton account and returns `{url}?access={token}` (10-min expiry). |
 | `protectedSignup` | `(access: string, details: TSignupProps) => Promise<AllAuthTokens>` | Validates registration access token, then delegates to `signup`. |
-| `getClientFromCookie` | `(authorization: string, role: AuthRole[]) => Promise<TUser \| null>` | Verifies refresh token, then looks up full user. |
+| `getClientFromCookie` | `(authorization: string, role: AuthRoles<TUser["roles"]>) => Promise<TUser \| null>` | Verifies refresh token, then looks up full user. |
 | `verifyAuthToken` | Overloaded | Verifies and decodes token. Returns user for `"access"`, or `{ userId, roles }` for `"refresh"`. Returns `null` on failure. |
 | `getAuthTokens` | `(payload, role) => Promise<AllAuthTokens>` | Signs access (1-day) and refresh (3-day) token pair. |
 | `getToken` | `(payload, exp, secret) => Promise<string>` | Low-level JWT signing with HS256. |
@@ -255,6 +259,7 @@ try {
 type AuthenticationServiceProps<TUser extends IUserAccount> = {
   userRepo: IUserRepository<TUser>;
   secretsConfig: AuthSecretsConfig;
+  cookieConfig: AuthCookieConfig;
 };
 ```
 
@@ -279,11 +284,12 @@ interface IAuthService<TUser extends IUserAccount = IUserAccount> {
   requestPasswordReset(email: string): Promise<string | null>;
   resetPassword(password: string, access: string): Promise<TUser | null>;
   getRegistrationAccessUrl(url: string): Promise<string>;
-  getClientFromCookie(authorization: string, role: AuthRole[]): Promise<TUser | null>;
-  verifyAuthToken(token: string, type: "refresh", roles: AuthRole[]): Promise<{ userId: string } | null>;
-  verifyAuthToken(token: string, type: "access", roles: AuthRole[]): Promise<TUser | null>;
-  getAuthTokens<U extends { id: string; password?: string }>(payload: U, role: AuthRole[]): Promise<AllAuthTokens>;
+  getClientFromCookie(authorization: string, role: AuthRoles<TUser["roles"]>): Promise<TUser | null>;
+  verifyAuthToken(token: string, type: "refresh", roles: AuthRoles<TUser["roles"]>): Promise<{ userId: string } | null>;
+  verifyAuthToken(token: string, type: "access", roles: AuthRoles<TUser["roles"]>): Promise<TUser | null>;
+  getAuthTokens<U extends { id: string; password?: string }>(payload: U, role: AuthRoles<TUser["roles"]>): Promise<AllAuthTokens>;
   getToken<U extends Record<string, unknown>>(payload: U, exp: string, secret: Uint8Array): Promise<string>;
+  roles: RoleChecker<TUser>;
 }
 ```
 
@@ -340,15 +346,19 @@ type AuthCookieOptions = {
   maxAge: number;
 };
 
+type AuthCookieConfig = {
+  name?: string;
+  maxAgeInMins?: number;
+} & Partial<Omit<SetCookieResult["options"], "maxAge">>;
+
 type SetCookieResult = {
   name: string;
-  value: string;
   options: AuthCookieOptions;
 };
 
 type ClearCookieResult = {
   name: string;
-  options: Pick<AuthCookieOptions, "signed" | "path" | "httpOnly">;
+  options: Omit<AuthCookieOptions, "maxAge" | "sameSite">;
 };
 ```
 
@@ -357,7 +367,6 @@ type ClearCookieResult = {
 ```typescript
 type AuthToken = { accessToken: string };
 type AllAuthTokens = AuthToken & { refreshToken: string };
-type AuthRole = "admin" | "user";
 ```
 
 ### Sign-In / Sign-Up Props

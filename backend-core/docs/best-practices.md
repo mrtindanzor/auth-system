@@ -8,18 +8,17 @@ For most applications, `createAuthenticationService` is the right choice. It wir
 
 ### Always Set Cookies Framework-Specifically
 
-The library returns data structures for cookies, never sets them directly. This is intentional. Always apply them through your HTTP framework:
+The library returns data structures for cookies via `cookieUtils`, never sets them directly. This is intentional. Always apply them through your HTTP framework:
 
 ```typescript
 // Express
-const cookie = createAuthCookie({ token, isProduction, baseDomain });
-res.cookie(cookie.name, cookie.value, cookie.options);
+res.cookie(cookieUtils.setCookie.name, refreshToken, cookieUtils.setCookie.options);
 
 // Fastify
-res.setCookie(cookie.name, cookie.value, cookie.options);
+res.setCookie(cookieUtils.setCookie.name, refreshToken, cookieUtils.setCookie.options);
 
 // Hono
-res.cookie(cookie.name, cookie.value, cookie.options);
+res.cookie(cookieUtils.setCookie.name, refreshToken, cookieUtils.setCookie.options);
 ```
 
 ### Use `getBearerToken` for Authorization Header Extraction
@@ -63,13 +62,23 @@ if (!user) {
 
 The refresh token is in an httpOnly cookie. If your HTTP client doesn't send cookies, refresh will silently fail. Ensure your client sends `withCredentials: true` (Axios) or `credentials: "include"` (fetch).
 
-### Forgetting to Set `isProduction` Correctly
+### Misconfiguring Cookie Options
 
-The `createAuthCookie` helper changes behavior based on `isProduction`:
-- In development: no domain restriction, `sameSite: "lax"`, no `secure` flag
-- In production: domain-locked, `sameSite: "none"`, `secure: true`
+The `cookieConfig` passed to `createAuthenticationService` controls cookie behavior directly. Common misconfigurations:
 
-If you set `isProduction: true` without HTTPS, cookies will not be set by browsers.
+- Setting `secure: true` without HTTPS — browsers will reject the cookie
+- Setting `sameSite: "none"` without `secure: true` — browsers reject this combination
+- Forgetting to set `domain` when frontend and backend are on different subdomains
+
+Configure `cookieConfig` based on your environment:
+
+```typescript
+const cookieConfig = {
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  domain: process.env.COOKIE_DOMAIN, // e.g., "example.com"
+};
+```
 
 ### Using Weak Secrets
 
@@ -101,7 +110,7 @@ The library uses bcrypt with 10 salt rounds. This is a good default for most app
 
 ### Role Checking
 
-`verifyAuthToken` checks that **all** of the user's roles are included in the required roles array. The `AuthRole` type is `"admin" | "user"`. If a user has roles `["admin", "user"]` and you verify with `["user"]`, it will pass. If a user has `["admin"]` and you verify with `["user"]`, it will fail.
+`verifyAuthToken` checks that **all** of the user's roles are included in the required roles array. The `AuthRoles` type extends `("admin" | "user")[]` with custom roles. If a user has roles `["admin", "user"]` and you verify with `["user"]`, it will pass. If a user has `["admin"]` and you verify with `["user"]`, it will fail.
 
 ### CORS Configuration
 

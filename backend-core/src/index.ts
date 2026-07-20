@@ -1,6 +1,7 @@
 import type { ISigninProps, ISignupProps } from "./auth/auth.contracts.types";
 import { AuthService } from "./auth/auth.service";
 import type { AuthSecretsConfig } from "./config";
+import { type AuthCookieConfig, createAuthCookie } from "./cookie";
 import type {
 	IUserAccount,
 	IUserRepository,
@@ -13,13 +14,10 @@ export { AuthService } from "./auth/auth.service";
 export type { AuthSecretsConfig } from "./config";
 export { createAuthConfig } from "./config";
 export type {
+	AuthCookieConfig,
 	AuthCookieOptions,
 	ClearCookieResult,
 	SetCookieResult,
-} from "./cookie";
-export {
-	clearAuthCookie,
-	createAuthCookie,
 } from "./cookie";
 export {
 	AppError,
@@ -37,22 +35,38 @@ export type { IUserRepository };
 export type AuthenticationServiceProps<TUser extends IUserAccount> = {
 	userRepo: IUserRepository<TUser>;
 	secretsConfig: AuthSecretsConfig;
+	cookieConfig: AuthCookieConfig;
 };
 
 export function createAuthenticationService<
 	TUser extends IUserAccount,
 	TSignupProps extends ISignupProps<TUser>,
 	TSigninProps extends ISigninProps,
->({ userRepo, secretsConfig }: AuthenticationServiceProps<TUser>) {
+>({
+	userRepo,
+	secretsConfig,
+	cookieConfig,
+}: AuthenticationServiceProps<TUser>) {
 	const userService = new UserService<TUser>(userRepo);
 	const authService = new AuthService<TUser, TSignupProps, TSigninProps>(
 		userService,
 		secretsConfig,
 	);
 
+	const createdCookieConfig = createAuthCookie(cookieConfig);
+	const {
+		sameSite: _s,
+		maxAge: _m,
+		...cookieOptions
+	} = createdCookieConfig.options;
+
 	return {
 		userService,
 		authService,
 		getBearerToken,
+		cookieUtils: {
+			setCookie: createdCookieConfig,
+			clearCookie: { name: createdCookieConfig.name, options: cookieOptions },
+		},
 	};
 }

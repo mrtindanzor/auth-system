@@ -80,9 +80,14 @@ const secretsConfig = createAuthConfig({
 ```typescript
 import { createAuthenticationService } from "@tindanzor/auth-server";
 
-const { authService, userService, getBearerToken } = createAuthenticationService({
+const { authService, userService, getBearerToken, cookieUtils } = createAuthenticationService({
   userRepo: new MyUserRepository(),
   secretsConfig,
+  cookieConfig: {
+    name: "auth",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  },
 });
 ```
 
@@ -92,7 +97,10 @@ const { authService, userService, getBearerToken } = createAuthenticationService
 // Sign in
 const tokens = await authService.signin({ email: "user@example.com", password: "pass" });
 // tokens.accessToken — JWT string
-// tokens.refreshToken — JWT string
+// tokens.refreshToken — set as httpOnly cookie via cookieUtils.setCookie
+
+// Set refresh token cookie
+res.cookie(cookieUtils.setCookie.name, tokens.refreshToken, cookieUtils.setCookie.options);
 
 // Verify access token
 const user = await authService.verifyAuthToken(tokens.accessToken, "access", ["user"]);
@@ -100,8 +108,8 @@ const user = await authService.verifyAuthToken(tokens.accessToken, "access", ["u
 // Get user from refresh cookie
 const userFromCookie = await authService.getClientFromCookie(bearerToken, ["user"]);
 
-// Logout (clear cookie on client side)
-const clearCookie = clearAuthCookie({ name: "refresh" });
+// Logout (clear cookie)
+res.clearCookie(cookieUtils.clearCookie.name, cookieUtils.clearCookie.options);
 ```
 
 ## What Your Server Must Handle
@@ -109,9 +117,8 @@ const clearCookie = clearAuthCookie({ name: "refresh" });
 The library provides authentication logic and data structures. Your server is responsible for:
 
 1. **Extracting the Bearer token** from the `Authorization` header (use `getBearerToken`)
-2. **Setting the refresh token as an httpOnly cookie** (use `createAuthCookie`)
-3. **Clearing the cookie on logout** (use `clearAuthCookie`)
-4. **Calling the appropriate `authService` methods** in your route handlers
+2. **Applying cookies to HTTP responses** (use `cookieUtils.setCookie` and `cookieUtils.clearCookie`)
+3. **Calling the appropriate `authService` methods** in your route handlers
 
 The library does **not** provide HTTP middleware, route handlers, or any framework-specific code.
 
