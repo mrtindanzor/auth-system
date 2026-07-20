@@ -10,62 +10,42 @@ export type AuthCookieOptions = {
 
 export type SetCookieResult = {
 	name: string;
-	value: string;
 	options: AuthCookieOptions;
 };
 
 export type ClearCookieResult = {
 	name: string;
-	options: Pick<AuthCookieOptions, "signed" | "path" | "httpOnly">;
+	options: Omit<AuthCookieOptions, "maxAge" | "sameSite">;
 };
 
-type AuthCookieConfg = {
-	token: string;
+export type AuthCookieConfig = {
 	name?: string;
-	isProduction: boolean;
-	baseDomain: string;
-	path?: string;
 	maxAgeInMins?: number;
-};
+} & Partial<Omit<SetCookieResult["options"], "maxAge">>;
+
 export function createAuthCookie({
-	token,
 	name = "auth",
-	isProduction,
-	baseDomain,
+	maxAgeInMins = 3,
+	signed = false,
+	secure = true,
 	path = "/",
-	maxAgeInMins = 4320,
-}: AuthCookieConfg): SetCookieResult {
+	httpOnly = true,
+	domain = undefined,
+	sameSite = "none",
+}: AuthCookieConfig &
+	Partial<Omit<SetCookieResult["options"], "maxAge">>): SetCookieResult {
 	const MAX_AGE = maxAgeInMins * 60 * 1000;
 
 	return {
 		name,
-		value: token,
 		options: {
-			signed: false,
+			signed,
 			path,
-			httpOnly: true,
-			domain: isProduction ? `.${baseDomain}` : undefined,
-			secure: isProduction,
-			sameSite: isProduction ? "none" : "lax",
+			httpOnly,
+			domain: domain ? `.${domain}` : undefined,
+			secure,
+			sameSite,
 			maxAge: MAX_AGE,
-		},
-	};
-}
-
-type ClearAuthCookieConfig = {
-	name?: string;
-	path?: string;
-};
-export function clearAuthCookie({
-	name = "auth",
-	path = "/",
-}: ClearAuthCookieConfig): ClearCookieResult {
-	return {
-		name,
-		options: {
-			signed: false,
-			path,
-			httpOnly: true,
 		},
 	};
 }
