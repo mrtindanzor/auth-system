@@ -15,19 +15,14 @@
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `token` | `string` | Yes | — | The refresh token JWT string |
 | `name` | `string` | No | `"auth"` | Cookie name |
-| `isProduction` | `boolean` | Yes | — | Controls domain, secure, sameSite settings |
-| `baseDomain` | `string` | Yes | — | Domain for production cookies (e.g., `"example.com"`) |
-| `path` | `string` | No | `"/"` | Cookie path |
 | `maxAgeInMins` | `number` | No | `4320` (3 days) | Cookie lifetime in minutes |
-
-### `clearAuthCookie` Config
-
-| Field | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `name` | `string` | No | `"auth"` | Cookie name to clear |
+| `signed` | `boolean` | No | `false` | Whether the cookie is signed |
+| `secure` | `boolean` | No | `true` | Whether the cookie requires HTTPS |
 | `path` | `string` | No | `"/"` | Cookie path |
+| `httpOnly` | `boolean` | No | `true` | Whether the cookie is httpOnly |
+| `domain` | `string` | No | `undefined` | Cookie domain (prefixed with `.` if set) |
+| `sameSite` | `"none" \| "lax" \| "strict"` | No | `"none"` | SameSite attribute |
 
 ## Types
 
@@ -90,11 +85,12 @@ interface IAuthService<TUser extends IUserAccount = IUserAccount> {
   requestPasswordReset(email: string): Promise<string | null>;
   resetPassword(password: string, access: string): Promise<TUser | null>;
   getRegistrationAccessUrl(url: string): Promise<string>;
-  getClientFromCookie(authorization: string, role: AuthRole[]): Promise<TUser | null>;
-  verifyAuthToken(token: string, type: "refresh", roles: AuthRole[]): Promise<{ userId: string } | null>;
-  verifyAuthToken(token: string, type: "access", roles: AuthRole[]): Promise<TUser | null>;
-  getAuthTokens<U extends { id: string; password?: string }>(payload: U, role: AuthRole[]): Promise<AllAuthTokens>;
+  getClientFromCookie(authorization: string, role: AuthRoles<TUser["roles"]>): Promise<TUser | null>;
+  verifyAuthToken(token: string, type: "refresh", roles: AuthRoles<TUser["roles"]>): Promise<{ userId: string } | null>;
+  verifyAuthToken(token: string, type: "access", roles: AuthRoles<TUser["roles"]>): Promise<TUser | null>;
+  getAuthTokens<U extends { id: string; password?: string }>(payload: U, role: AuthRoles<TUser["roles"]>): Promise<AllAuthTokens>;
   getToken<U extends Record<string, unknown>>(payload: U, exp: string, secret: Uint8Array): Promise<string>;
+  roles: RoleChecker<TUser>;
 }
 ```
 
@@ -103,7 +99,6 @@ interface IAuthService<TUser extends IUserAccount = IUserAccount> {
 ```typescript
 type AuthToken = { accessToken: string };
 type AllAuthTokens = AuthToken & { refreshToken: string };
-type AuthRole = "admin" | "user";
 ```
 
 ### Sign-In / Sign-Up Props
@@ -123,6 +118,7 @@ type ISignupProps<TUser extends Omit<IUserAccount, "id">> = TUser & ISigninProps
 type AuthenticationServiceProps<TUser extends IUserAccount> = {
   userRepo: IUserRepository<TUser>;
   secretsConfig: AuthSecretsConfig;
+  cookieConfig: AuthCookieConfig;
 };
 ```
 
@@ -139,15 +135,19 @@ type AuthCookieOptions = {
   maxAge: number;
 };
 
+type AuthCookieConfig = {
+  name?: string;
+  maxAgeInMins?: number;
+} & Partial<Omit<SetCookieResult["options"], "maxAge">>;
+
 type SetCookieResult = {
   name: string;
-  value: string;
   options: AuthCookieOptions;
 };
 
 type ClearCookieResult = {
   name: string;
-  options: Pick<AuthCookieOptions, "signed" | "path" | "httpOnly">;
+  options: Omit<AuthCookieOptions, "maxAge" | "sameSite">;
 };
 ```
 
@@ -176,9 +176,9 @@ All error classes extend `Error` and include a `status` number property and a `n
 | Reset token expiry | `"10m"` | Signed in `requestPasswordReset` |
 | Registration token expiry | `"10m"` | Signed in `getRegistrationAccessUrl` |
 | bcrypt salt rounds | `10` | Used in `signup` and `resetPassword` |
-| Cookie name | `"auth"` | Default for `createAuthCookie` and `clearAuthCookie` |
+| Cookie name | `"auth"` | Default for `createAuthCookie` |
 | Cookie max age | `4320` minutes (3 days) | Default for `createAuthCookie` |
-| Cookie path | `"/"` | Default for both cookie helpers |
+| Cookie path | `"/"` | Default for `createAuthCookie` |
 | Cookie httpOnly | `true` | Always |
 | Cookie signed | `false` | Always |
 

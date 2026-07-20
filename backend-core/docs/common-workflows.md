@@ -16,9 +16,14 @@ const secretsConfig = createAuthConfig({
   passwordResetSecret: process.env.PASSWORD_RESET_SECRET!,
 });
 
-export const { authService, userService, getBearerToken } = createAuthenticationService({
+export const { authService, userService, getBearerToken, cookieUtils } = createAuthenticationService({
   userRepo: new MyUserRepository(),
   secretsConfig,
+  cookieConfig: {
+    name: "auth",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  },
 });
 ```
 
@@ -72,34 +77,23 @@ The signup automatically:
 
 ## Setting the Refresh Token Cookie
 
-Use `createAuthCookie` to set the refresh token as an httpOnly cookie:
+Use `cookieUtils.setCookie` (returned by `createAuthenticationService`) to set the refresh token as an httpOnly cookie:
 
 ```typescript
-import { createAuthCookie } from "@tindanzor/auth-server";
-
 // In your route handler
 const tokens = await authService.signin({ email, password });
 
-const cookie = createAuthCookie({
-  token: tokens.refreshToken,
-  isProduction: process.env.NODE_ENV === "production",
-  baseDomain: "example.com",
-});
-
-res.cookie(cookie.name, cookie.value, cookie.options);
+res.cookie(cookieUtils.setCookie.name, tokens.refreshToken, cookieUtils.setCookie.options);
 res.json({ accessToken: tokens.accessToken });
 ```
 
 ## Clearing the Cookie on Logout
 
 ```typescript
-import { clearAuthCookie } from "@tindanzor/auth-server";
-
 // In your logout route handler
 await authService.signout(tokens.refreshToken); // if you have a signout method
 
-const clearCookie = clearAuthCookie();
-res.clearCookie(clearCookie.name, clearCookie.options);
+res.clearCookie(cookieUtils.clearCookie.name, cookieUtils.clearCookie.options);
 res.status(200).json({ message: "Logged out" });
 ```
 
@@ -216,31 +210,20 @@ const token = getBearerToken(null);  // ""
 ## Complete Express-Like Route Handler
 
 ```typescript
-import {
-  createAuthCookie,
-  clearAuthCookie,
-  getBearerToken,
-} from "@tindanzor/auth-server";
-import { authService } from "./auth";
+import { getBearerToken } from "@tindanzor/auth-server";
+import { authService, cookieUtils } from "./auth";
 
 async function loginHandler(req, res) {
   const { email, password } = req.body;
 
   const tokens = await authService.signin({ email, password });
 
-  const cookie = createAuthCookie({
-    token: tokens.refreshToken,
-    isProduction: process.env.NODE_ENV === "production",
-    baseDomain: "example.com",
-  });
-
-  res.cookie(cookie.name, cookie.value, cookie.options);
+  res.cookie(cookieUtils.setCookie.name, tokens.refreshToken, cookieUtils.setCookie.options);
   res.json({ accessToken: tokens.accessToken });
 }
 
 async function logoutHandler(req, res) {
-  const clearCookie = clearAuthCookie();
-  res.clearCookie(clearCookie.name, clearCookie.options);
+  res.clearCookie(cookieUtils.clearCookie.name, cookieUtils.clearCookie.options);
   res.json({ message: "Logged out" });
 }
 

@@ -5,7 +5,7 @@ backend-core/
 ├── src/
 │   ├── index.ts                    # Main entry point — public API exports + createAuthenticationService
 │   ├── config.ts                   # createAuthConfig — JWT secret encoding
-│   ├── cookie.ts                   # createAuthCookie, clearAuthCookie — cookie data helpers
+│   ├── cookie.ts                   # createAuthCookie — cookie config helper
 │   ├── errors.ts                   # Error class hierarchy (internal)
 │   │
 │   ├── auth/                       # Core authentication logic
@@ -32,7 +32,7 @@ backend-core/
 
 The main entry point does two things:
 1. **Re-exports** types and classes from internal modules (making them part of the public API)
-2. **Defines and exports** `createAuthenticationService` — the top-level factory that wires `UserService` and `AuthService` together
+2. **Defines and exports** `createAuthenticationService` — the top-level factory that wires `UserService` and `AuthService` together, and returns `cookieUtils` (pre-configured set/clear cookie data structures)
 
 ### `config.ts` — Secret Configuration
 
@@ -40,10 +40,9 @@ Creates an `AuthSecretsConfig` from four plain-text secret strings. The access a
 
 ### `cookie.ts` — Cookie Helpers
 
-Framework-agnostic helpers that return data structures for setting and clearing httpOnly cookies. They do **not** interact with any HTTP response directly — your application applies the returned data to its own response mechanism.
+Framework-agnostic helpers that return data structures for setting httpOnly cookies. They do **not** interact with any HTTP response directly — your application applies the returned data to its own response mechanism.
 
-- `createAuthCookie` — Returns `{ name, value, options }` for setting a refresh token cookie
-- `clearAuthCookie` — Returns `{ name, options }` for clearing the cookie
+- `createAuthCookie` — Returns `{ name, options }` for setting a refresh token cookie
 
 ### `errors.ts` — Error Hierarchy
 
@@ -76,7 +75,7 @@ Defines the interfaces and types for the auth module:
 - `ISigninProps` — Discriminated union for login (email/phone/username + password)
 - `ISignupProps<TUser>` — Registration payload type
 - `AllAuthTokens` — `{ accessToken, refreshToken }`
-- `AuthRole` — `"admin" | "user"`
+- `AuthRoles<Roles>` — Generic role type extending `("admin" | "user")[]`
 
 ### `user/user.service.ts` — User Service
 

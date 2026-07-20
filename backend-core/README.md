@@ -22,9 +22,13 @@ const secretsConfig = createAuthConfig({
   passwordResetSecret: process.env.PASSWORD_RESET_SECRET!,
 });
 
-const { authService, userService, getBearerToken } = createAuthenticationService({
+const { authService, userService, getBearerToken, cookieUtils } = createAuthenticationService({
   userRepo: myUserRepository,
   secretsConfig,
+  cookieConfig: {
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  },
 });
 
 // Sign in

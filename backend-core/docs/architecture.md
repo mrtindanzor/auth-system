@@ -6,7 +6,7 @@
 
 1. **Dependency Inversion** — The library depends on `IUserRepository` (an interface), not a concrete database implementation. Your application provides the repository, and the library handles all auth logic on top of it.
 
-2. **Configuration Over Modification** — You supply JWT secrets, cookie settings, and repository implementations. The library provides no defaults for these and does not expect you to override internal behavior.
+2. **Configuration Over Modification** — You supply JWT secrets, cookie settings, and repository implementations at service initialization time. The library provides no defaults for these and does not expect you to override internal behavior.
 
 3. **Framework Agnostic** — The library has zero HTTP framework dependencies. It provides data structures for cookies and tokens, but your application is responsible for applying them to HTTP responses. This means it works with Express, Fastify, Hono, Next.js server actions, or any other runtime.
 
@@ -18,7 +18,6 @@ graph TB
         CAS["createAuthenticationService"]
         CAC["createAuthConfig"]
         CCK["createAuthCookie"]
-        CCKC["clearAuthCookie"]
     end
 
     subgraph "Services"
@@ -33,6 +32,7 @@ graph TB
     subgraph "Utilities"
         CFIG["AuthSecretsConfig<br/>(secret encoding)"]
         CK["Cookie helpers<br/>(data structures)"]
+        CU["cookieUtils<br/>(setCookie, clearCookie)"]
         GBT["getBearerToken"]
         ERR["Error classes<br/>(internal)"]
         TC["tryCatch / syncTryCatch"]
@@ -40,6 +40,7 @@ graph TB
 
     CAS --> AS
     CAS --> US
+    CAS --> CU
     CAS --> GBT
 
     AS --> US
@@ -51,7 +52,7 @@ graph TB
 
     CAC --> CFIG
     CCK --> CK
-    CCKC --> CK
+    CU --> CCK
 ```
 
 ## Data Flow
@@ -142,9 +143,9 @@ This is a clever security mechanism that avoids the need for a token revocation 
 
 `UserService` delegates every method directly to `IUserRepository`. Its purpose is to provide an interface boundary — `AuthService` depends on `IUserService`, not `IUserRepository`. This allows the service layer to be swapped, decorated, or mocked independently of the repository.
 
-### Cookie Helpers Return Data, Not Side Effects
+### Cookie Configuration Is Internal to the Service
 
-`createAuthCookie` and `clearAuthCookie` return data structures (`SetCookieResult`, `ClearCookieResult`) rather than directly setting cookies on a response. This keeps the library framework-agnostic — your application calls `res.cookie()` or `setCookie()` with the returned data.
+`createAuthenticationService` accepts a `cookieConfig` parameter and internally creates cookie data structures via `createAuthCookie`. The returned `cookieUtils` object provides `setCookie` and `clearCookie` — pre-configured data structures that your application applies to HTTP responses. This keeps the library framework-agnostic while ensuring cookie configuration is centralized at service initialization.
 
 ### Sign-In Lookup Strategies
 

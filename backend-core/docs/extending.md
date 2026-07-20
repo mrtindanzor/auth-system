@@ -84,6 +84,7 @@ type MyUser = {
 const { authService } = createAuthenticationService<MyUser, /* ... */>({
   userRepo: myRepo,
   secretsConfig,
+  cookieConfig: { name: "auth" },
 });
 
 const user = await authService.verifyAuthToken(token, "access", ["user"]);

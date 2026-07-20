@@ -13,7 +13,7 @@ The library follows **dependency inversion** — it depends on an `IUserReposito
 - You need authentication infrastructure for a Node.js backend
 - You want a complete auth service (signin, signup, password reset, token verification)
 - You need JWT signing and verification with configurable secrets
-- You want httpOnly cookie helpers for refresh tokens
+- You want httpOnly cookie handling for refresh tokens (configured via `cookieConfig`)
 - You prefer a composable, factory-based API over middleware monoliths
 
 ## Quick Start
