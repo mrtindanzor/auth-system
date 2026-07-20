@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.3.2
+
+### Patch Changes
+
+- 887280a: Added forgetten the unique id to protected signup ids, used for invalidating signup. Fixed request pasword resetd bug (user password not added to secret signing)
+
 ## 2.3.1
 
 ### Patch Changes
