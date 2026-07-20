@@ -1,4 +1,4 @@
-type BaseRoles = ("admin" | "user")[];
+import type { AuthRoles } from "../auth/auth.contracts.types";
 
 export type IUserAccount<Roles extends readonly string[] = readonly string[]> =
 	(
@@ -22,7 +22,7 @@ export type IUserAccount<Roles extends readonly string[] = readonly string[]> =
 				password: string;
 		  }
 	) & {
-		roles: [...BaseRoles, ...Roles];
+		roles: AuthRoles<Roles>;
 	};
 
 export type IUserRepository<TUser extends IUserAccount = IUserAccount> = {
