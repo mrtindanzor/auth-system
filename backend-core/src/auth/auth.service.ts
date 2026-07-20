@@ -195,7 +195,8 @@ export class AuthService<
 					token,
 					this.config.accessSecret,
 				);
-				if (!user || !roleBuilder(user.roles, roles).passes()) return null;
+				if (!user || !roleBuilder(user.roles ?? [], roles).passes())
+					return null;
 
 				return user;
 			}
@@ -206,7 +207,8 @@ export class AuthService<
 					roles: AuthRole[];
 				}>(token, this.config.refreshSecret);
 
-				if (!user || !roleBuilder(user.roles, roles).passes()) return null;
+				if (!user || !roleBuilder(user.roles ?? [], roles).passes())
+					return null;
 
 				return user;
 			}
@@ -229,16 +231,16 @@ export class AuthService<
 
 	async getAuthTokens<U extends { id: string; password?: string }>(
 		payload: U,
-		role: AuthRole[],
+		roles: AuthRole[],
 	): Promise<AllAuthTokens> {
 		const { id, password: _p, ...rest } = payload;
 		const [accessToken, refreshToken] = await Promise.all([
 			this.getToken(
-				{ userId: id, id, ...rest, role },
+				{ userId: id, id, ...rest, roles },
 				"1d",
 				this.config.accessSecret,
 			),
-			this.getToken({ userId: id, role }, "3d", this.config.refreshSecret),
+			this.getToken({ userId: id, roles }, "3d", this.config.refreshSecret),
 		]);
 		return { accessToken, refreshToken };
 	}
