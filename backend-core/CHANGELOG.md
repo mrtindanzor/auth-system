@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.2.1
+
+### Patch Changes
+
+- 75aedad: Fixed: unable to extend user roles
+
 ## 2.2.0
 
 ### Minor Changes
