@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.3.0
+
+### Minor Changes
+
+- 15c1ef1: Updated cookie config creation to be interally handled
+
 ## 2.2.1
 
 ### Patch Changes
