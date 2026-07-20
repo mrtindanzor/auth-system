@@ -1,3 +1,4 @@
+import type { IUserAccount } from "../api/types";
 import { createUserStore } from "../user";
 import { createUseAuth } from "./hooks/useAuth";
 import { createUseAuthRefresh } from "./hooks/useAuthRefresh";
@@ -7,7 +8,7 @@ import type { AuthServiceOptions } from "./service";
 import { createAuthStore } from "./store";
 
 export function createAuthClient<
-	TUser extends object,
+	TUser extends IUserAccount,
 	TLogin extends object,
 	TRegister extends object,
 	TResetPassword extends object = object,
@@ -16,13 +17,14 @@ export function createAuthClient<
 	options: Omit<AuthServiceOptions, "getAccessToken">,
 	authGuardConfig: Omit<AuthGuardConfig, "isAuthenticated">,
 ) {
-	const useAuthStore = createAuthStore();
+	const useAuthStore = createAuthStore<TUser>();
 	const authGuard = createAuthGuard({
 		...authGuardConfig,
 		isAuthenticated: () => useAuthStore.getState().isLoggedIn,
 	});
 	const useUserStore = createUserStore<TUser>();
 	const useAuthService = createUseAuthService<
+		TUser,
 		TLogin,
 		TRegister,
 		TResetPassword,

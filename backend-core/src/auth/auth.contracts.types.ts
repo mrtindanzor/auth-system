@@ -18,6 +18,19 @@ export type ISigninProps =
 			password: string;
 	  };
 
+type RoleCheckerRecurse<
+	TUser extends IUserAccount,
+	Roles extends TUser["roles"] = TUser["roles"],
+> = {
+	add: (role: Roles[number]) => RoleCheckerRecurse<TUser>;
+	passes: () => boolean;
+};
+
+export type RoleChecker<
+	TUser extends IUserAccount,
+	Roles extends TUser["roles"] = TUser["roles"],
+> = (userRoles: Roles) => RoleCheckerRecurse<TUser, Roles>;
+
 export type ISignupProps<TUser extends Omit<IUserAccount, "id">> = TUser &
 	ISigninProps;
 
@@ -54,4 +67,5 @@ export interface IAuthService<TUser extends IUserAccount = IUserAccount> {
 		exp: string,
 		secret: Uint8Array,
 	): Promise<string>;
+	roles: RoleChecker<TUser>;
 }

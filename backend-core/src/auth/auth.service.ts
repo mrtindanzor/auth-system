@@ -12,6 +12,7 @@ import type {
 	ISigninProps,
 	ISignupProps,
 } from "./auth.contracts.types";
+import { roleBuilder } from "./auth.roles";
 
 export class AuthService<
 	TUserAccount extends IUserAccount,
@@ -188,33 +189,24 @@ export class AuthService<
 		type: "access" | "refresh",
 		roles: AuthRole[],
 	): Promise<{ userId: string; roles: AuthRole[] } | TUserAccount | null> {
-		const isSuffientRoles = (
-			roles: AuthRole[],
-			user: { roles: AuthRole[] },
-		) => {
-			return (
-				(user.roles ?? []).filter((r) => roles.includes(r)).length !==
-				(user.roles ?? []).length
-			);
-		};
-
 		switch (type) {
 			case "access": {
 				const user = await this.verifyToken<TUserAccount>(
 					token,
 					this.config.accessSecret,
 				);
-				if (!user || !isSuffientRoles(roles, user)) return null;
+				if (!user || !roleBuilder(user.roles, roles).passes()) return null;
 
 				return user;
 			}
+
 			case "refresh": {
 				const user = await this.verifyToken<{
 					userId: string;
 					roles: AuthRole[];
 				}>(token, this.config.refreshSecret);
 
-				if (!user || !isSuffientRoles(roles, user)) return null;
+				if (!user || !roleBuilder(user.roles, roles).passes()) return null;
 
 				return user;
 			}
@@ -254,6 +246,13 @@ export class AuthService<
 	private decodeToken<T>(token: string) {
 		const data = syncTryCatch(() => decodeJwt<T>(token));
 		return data.success ? data.data : null;
+	}
+
+	roles<
+		TUser extends IUserAccount,
+		Roles extends TUser["roles"] = TUser["roles"],
+	>(userRoles: Roles) {
+		return roleBuilder<TUser, Roles>(userRoles, []);
 	}
 
 	private async verifyToken<T>(token: string, secret: Uint8Array) {
