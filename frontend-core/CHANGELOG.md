@@ -1,5 +1,11 @@
 # @tindanzor/auth-client
 
+## 0.4.1
+
+### Patch Changes
+
+- 42ea09f: Fixed role checker throwing errors and referencing static roles
+
 ## 0.4.0
 
 ### Minor Changes
