@@ -2,7 +2,13 @@ import type { IUserAccount } from "../user/user.contracts.types";
 
 export type AuthToken = { accessToken: string };
 export type AllAuthTokens = AuthToken & { refreshToken: string };
-export type AuthRole = "admin" | "user";
+
+type BaseRoles = ("admin" | "user")[];
+
+export type AuthRoles<Roles extends readonly string[] = readonly string[]> = [
+	...BaseRoles,
+	...Roles,
+];
 
 export type ISigninProps =
 	| {
@@ -48,21 +54,21 @@ export interface IAuthService<TUser extends IUserAccount = IUserAccount> {
 	getRegistrationAccessUrl(url: string): Promise<string>;
 	getClientFromCookie(
 		authorization: string,
-		role: AuthRole[],
+		role: AuthRoles<TUser["roles"]>,
 	): Promise<TUser | null>;
 	verifyAuthToken(
 		token: string,
 		type: "refresh",
-		roles: AuthRole[],
+		roles: AuthRoles<TUser["roles"]>,
 	): Promise<{ userId: string } | null>;
 	verifyAuthToken(
 		token: string,
 		type: "access",
-		roles: AuthRole[],
+		roles: AuthRoles<TUser["roles"]>,
 	): Promise<TUser | null>;
 	getAuthTokens<U extends { id: string; password?: string }>(
 		payload: U,
-		role: AuthRole[],
+		role: AuthRoles<TUser["roles"]>,
 	): Promise<AllAuthTokens>;
 	getToken<U extends Record<string, unknown>>(
 		payload: U,

@@ -7,7 +7,6 @@ import type { IUserAccount, IUserService } from "../user/user.contracts.types";
 import { syncTryCatch, tryCatch } from "../utils/tryCatch";
 import type {
 	AllAuthTokens,
-	AuthRole,
 	IAuthService,
 	ISigninProps,
 	ISignupProps,
@@ -169,7 +168,7 @@ export class AuthService<
 
 	async getClientFromCookie(
 		authorization: string,
-		role: AuthRole[],
+		role: TUserAccount["roles"],
 	): Promise<TUserAccount | null> {
 		const user = await this.verifyAuthToken(authorization, "refresh", role);
 		if (!user) return null;
@@ -179,18 +178,20 @@ export class AuthService<
 	async verifyAuthToken(
 		token: string,
 		type: "refresh",
-		roles: AuthRole[],
-	): Promise<{ userId: string; roles: AuthRole[] } | null>;
+		roles: TUserAccount["roles"],
+	): Promise<{ userId: string; roles: TUserAccount["roles"] } | null>;
 	async verifyAuthToken(
 		token: string,
 		type: "access",
-		roles: AuthRole[],
+		roles: TUserAccount["roles"],
 	): Promise<TUserAccount | null>;
 	async verifyAuthToken(
 		token: string,
 		type: "access" | "refresh",
-		roles: AuthRole[],
-	): Promise<{ userId: string; roles: AuthRole[] } | TUserAccount | null> {
+		roles: TUserAccount["roles"],
+	): Promise<
+		{ userId: string; roles: TUserAccount["roles"] } | TUserAccount | null
+	> {
 		switch (type) {
 			case "access": {
 				const user = await this.verifyToken<TUserAccount>(
@@ -206,7 +207,7 @@ export class AuthService<
 			case "refresh": {
 				const user = await this.verifyToken<{
 					userId: string;
-					roles: AuthRole[];
+					roles: TUserAccount["roles"];
 				}>(token, this.config.refreshSecret);
 
 				if (!user || !roleBuilder(user.roles ?? [], roles).passes())
@@ -233,7 +234,7 @@ export class AuthService<
 
 	async getAuthTokens<U extends { id: string; password?: string }>(
 		payload: U,
-		roles: AuthRole[],
+		roles: TUserAccount["roles"],
 	): Promise<AllAuthTokens> {
 		const { id, password: _p, ...rest } = payload;
 		const [accessToken, refreshToken] = await Promise.all([

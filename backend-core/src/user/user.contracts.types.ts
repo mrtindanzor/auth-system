@@ -1,26 +1,29 @@
-export type IUserAccount = (
-	| {
-			id: string;
-			name?: string;
-			email?: string;
-			password: string;
-	  }
-	| {
-			id: string;
-			name?: string;
-			username?: string;
-			password: string;
-	  }
-	| {
-			id: string;
-			name?: string;
-			email?: string;
-			username?: string;
-			password: string;
-	  }
-) & {
-	roles: ("admin" | "user")[];
-};
+import type { AuthRoles } from "../auth/auth.contracts.types";
+
+export type IUserAccount<Roles extends readonly string[] = readonly string[]> =
+	(
+		| {
+				id: string;
+				name?: string;
+				email?: string;
+				password: string;
+		  }
+		| {
+				id: string;
+				name?: string;
+				username?: string;
+				password: string;
+		  }
+		| {
+				id: string;
+				name?: string;
+				email?: string;
+				username?: string;
+				password: string;
+		  }
+	) & {
+		roles: AuthRoles<Roles>;
+	};
 
 export type IUserRepository<TUser extends IUserAccount = IUserAccount> = {
 	findByEmailOrPhone(props: {
