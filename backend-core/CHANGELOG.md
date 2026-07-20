@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.2.0
+
+### Minor Changes
+
+- 42ea09f: Added user data to signin and signup response data
+
 ## 2.1.1
 
 ### Patch Changes
