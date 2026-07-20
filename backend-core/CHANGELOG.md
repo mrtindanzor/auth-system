@@ -1,5 +1,11 @@
 # @tindanzor/auth-server
 
+## 2.1.0
+
+### Minor Changes
+
+- 5d09f52: Added roles builder for checker
+
 ## 2.0.1
 
 ### Patch Changes

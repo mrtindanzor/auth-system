@@ -1,5 +1,11 @@
 # @tindanzor/auth-client
 
+## 0.4.0
+
+### Minor Changes
+
+- 5d09f52: Added roles management and builder api
+
 ## 0.3.2
 
 ### Patch Changes
