@@ -25,7 +25,9 @@ export class AuthService<
 		private config: AuthSecretsConfig,
 	) {}
 
-	async signin(details: TSigninProps): Promise<AllAuthTokens> {
+	async signin(
+		details: TSigninProps,
+	): Promise<AllAuthTokens & { user: TUserAccount }> {
 		let user: TUserAccount | null = null;
 
 		if ("email" in details && "phone" in details) {
@@ -53,10 +55,17 @@ export class AuthService<
 		);
 
 		if (!isPasswordMatch) throw new ValidationError("Invalid credentials");
-		return await this.getAuthTokens(foundUser, foundUser.roles);
+		const tokens = await this.getAuthTokens(foundUser, foundUser.roles);
+		return {
+			...tokens,
+			user: foundUser,
+		};
 	}
 
-	async signup({ password, ...details }: TSignupProps): Promise<AllAuthTokens> {
+	async signup({
+		password,
+		...details
+	}: TSignupProps): Promise<AllAuthTokens & { user: TUserAccount }> {
 		let isExists: TUserAccount | null = null;
 
 		if ("email" in details && "phone" in details) {
@@ -86,7 +95,11 @@ export class AuthService<
 			...details,
 			password: hashedPassword,
 		});
-		return await this.getAuthTokens(user, user.roles);
+		const tokens = await this.getAuthTokens(user, user.roles);
+		return {
+			...tokens,
+			user,
+		};
 	}
 
 	async requestPasswordReset(email: string) {
@@ -126,11 +139,10 @@ export class AuthService<
 	}
 
 	async getRegistrationAccessUrl(url: string) {
-		const { id, password } = await this.setUpNewAccount();
 		const access = await this.getToken(
-			{ id, password },
+			{},
 			"10m",
-			this.config.getRegistrationSecret(password),
+			this.config.getRegistrationSecret(""),
 		);
 		return `${url}?access=${access}`;
 	}
@@ -138,7 +150,7 @@ export class AuthService<
 	async protectedSignup(
 		access: string,
 		details: TSignupProps,
-	): Promise<AllAuthTokens> {
+	): Promise<AllAuthTokens & { user: TUserAccount }> {
 		const decoded = this.decodeToken<{
 			id: string;
 			password: string;
@@ -153,16 +165,6 @@ export class AuthService<
 		if (!isValid) throw new UnauthorizedError();
 
 		return this.signup(details);
-	}
-
-	private setUpNewAccount() {
-		return this.userService.save({
-			phone: "",
-			username: "",
-			email: "",
-			password: "",
-			roles: [],
-		});
 	}
 
 	async getClientFromCookie(

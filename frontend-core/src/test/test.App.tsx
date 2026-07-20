@@ -15,7 +15,7 @@ const { useAuthRefresh, useAuthStore } = createAuthClient<
 	Register
 >(
 	{
-		baseUrl: "http://localhost:8000",
+		baseUrl: "http://localhost:8000/fbci",
 		endpoints: {
 			login: {
 				method: "post",
@@ -47,6 +47,13 @@ export function App() {
 	useAuthRefresh();
 	const hasRefreshed = useAuthStore((s) => s.hasRefreshed);
 	const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+	const roleChecker = useAuthStore((s) => s.roleChecker);
+	const isDeveloper = roleChecker.add("developer").passes();
+	const isAdmin = roleChecker.add("admin").passes();
+	const roles = useAuthStore((s) => s.roles);
+	console.log(roles);
+
+	console.log({ isDeveloper, isAdmin });
 
 	useEffect(() => {
 		console.log({ isLoggedIn, hasRefreshed });

@@ -35,12 +35,14 @@ export type ISignupProps<TUser extends Omit<IUserAccount, "id">> = TUser &
 	ISigninProps;
 
 export interface IAuthService<TUser extends IUserAccount = IUserAccount> {
-	signin(details: ISigninProps): Promise<AllAuthTokens>;
-	signup(details: ISignupProps<TUser>): Promise<AllAuthTokens>;
+	signin(details: ISigninProps): Promise<AllAuthTokens & { user: TUser }>;
+	signup(
+		details: ISignupProps<TUser>,
+	): Promise<AllAuthTokens & { user: TUser }>;
 	protectedSignup(
 		access: string,
 		details: ISignupProps<TUser>,
-	): Promise<AllAuthTokens>;
+	): Promise<AllAuthTokens & { user: TUser }>;
 	requestPasswordReset(email: string): Promise<string | null>;
 	resetPassword(password: string, access: string): Promise<TUser | null>;
 	getRegistrationAccessUrl(url: string): Promise<string>;

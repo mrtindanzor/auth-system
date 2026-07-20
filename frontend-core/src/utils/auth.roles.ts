@@ -6,8 +6,9 @@ export function roleBuilder<
 >(userRoles: Roles, requiredRoles: Roles[number][]) {
 	return {
 		add: (role: Roles[number]) => {
-			return roleBuilder(userRoles, [...requiredRoles, role]);
+			return roleBuilder(userRoles ?? [], [...requiredRoles, role]);
 		},
-		passes: () => requiredRoles.every((role) => userRoles.includes(role)),
+		passes: () =>
+			requiredRoles.every((role) => (userRoles ?? []).includes(role)),
 	};
 }

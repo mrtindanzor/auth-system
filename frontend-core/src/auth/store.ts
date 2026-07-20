@@ -30,13 +30,15 @@ export function createAuthStore<TUser extends IUserAccount>() {
 		hasRefreshed: false,
 
 		setAccessToken(accessToken) {
-			const roles = decodeUserFromToken<TUser>(accessToken)?.roles;
+			let roles = decodeUserFromToken<TUser>(accessToken)?.roles;
+			if (!Array.isArray(roles)) roles = [];
 
 			set({
 				isLoggedIn: !!accessToken,
 				accessToken,
 				hasRefreshed: true,
-				roles: Array.isArray(roles) ? roles : [],
+				roles,
+				roleChecker: roleBuilder(roles, []),
 			});
 		},
 
@@ -51,6 +53,6 @@ export function createAuthStore<TUser extends IUserAccount>() {
 			});
 		},
 		roles: [],
-		roleChecker: roleBuilder(get().roles, []),
+		roleChecker: roleBuilder<TUser>([], []),
 	}));
 }
