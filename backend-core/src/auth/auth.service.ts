@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { decodeJwt, jwtVerify, SignJWT } from "jose";
 import type { AuthSecretsConfig } from "../config";
@@ -19,6 +20,8 @@ export class AuthService<
 	TSigninProps extends ISigninProps,
 > implements IAuthService
 {
+	private PROTECTED_SIGN_UP_IDS = new Set();
+
 	constructor(
 		private userService: IUserService<TUserAccount>,
 		private config: AuthSecretsConfig,
@@ -29,17 +32,16 @@ export class AuthService<
 	): Promise<AllAuthTokens & { user: TUserAccount }> {
 		let user: TUserAccount | null = null;
 
-		if ("email" in details && "phone" in details) {
-			user = await this.userService.findByEmailOrPhone({
-				email: details.email,
-				phone: details.phone as string,
-			});
-		} else if ("email" in details) {
+		if ("email" in details) {
 			user = await this.userService.findByEmail(details.email);
-		} else if ("phone" in details) {
+		}
+
+		if ("phone" in details && !user) {
 			// biome-ignore lint/suspicious/noExplicitAny: This exists on the interface
 			user = await this.userService.findOne("phone" as any, details.phone);
-		} else if ("username" in details) {
+		}
+
+		if ("username" in details && !user) {
 			user = await this.userService.findOne(
 				// biome-ignore lint/suspicious/noExplicitAny: This exists on the interface
 				"username" as any,
@@ -66,34 +68,39 @@ export class AuthService<
 		...details
 	}: TSignupProps): Promise<AllAuthTokens & { user: TUserAccount }> {
 		let isExists: TUserAccount | null = null;
+		let credentialType = "";
 
-		if ("email" in details && "phone" in details) {
-			isExists = await this.userService.findByEmailOrPhone({
-				email: details.email as string,
-				phone: details.phone as string,
-			});
-		} else if ("email" in details) {
+		if ("email" in details) {
 			isExists = await this.userService.findByEmail(details.email as string);
-		} else if ("phone" in details) {
+			credentialType = "email address";
+		}
+
+		if ("phone" in details && !isExists) {
 			isExists = await this.userService.findOne(
 				// biome-ignore lint/suspicious/noExplicitAny: This exists on the interface
 				"phone" as any,
 				details.phone as string,
 			);
-		} else if ("username" in details) {
+			credentialType = "phone number";
+		}
+
+		if ("username" in details && !isExists) {
 			isExists = await this.userService.findOne(
 				// biome-ignore lint/suspicious/noExplicitAny: This exists on the interface
 				"username" as any,
 				details.username as string,
 			);
+			credentialType = "username";
 		}
 
-		assertUniqueNewAccount(isExists, "email address or phone number");
+		assertUniqueNewAccount(isExists, credentialType);
 		const hashedPassword = await bcrypt.hash(password, 10);
+
 		const user = await this.userService.save({
 			...details,
 			password: hashedPassword,
 		});
+
 		const tokens = await this.getAuthTokens(user, user.roles);
 		return {
 			...tokens,
@@ -108,7 +115,7 @@ export class AuthService<
 		const resetToken = await this.getToken(
 			{ userId: user.id, hash: user.password },
 			"10m",
-			this.config.getPasswordResetToken(user.password),
+			this.config.getPasswordResetToken(""),
 		);
 		return resetToken;
 	}
@@ -138,8 +145,11 @@ export class AuthService<
 	}
 
 	async getRegistrationAccessUrl(url: string) {
+		const id = crypto.randomBytes(32).toString("hex");
+		this.PROTECTED_SIGN_UP_IDS.add(id);
+
 		const access = await this.getToken(
-			{},
+			{ id },
 			"10m",
 			this.config.getRegistrationSecret(""),
 		);
@@ -152,18 +162,21 @@ export class AuthService<
 	): Promise<AllAuthTokens & { user: TUserAccount }> {
 		const decoded = this.decodeToken<{
 			id: string;
-			password: string;
 		}>(access);
-		if (!decoded) throw new UnauthorizedError();
+		if (!decoded || !this.PROTECTED_SIGN_UP_IDS.has(decoded.id))
+			throw new UnauthorizedError();
 
 		const isValid = await this.verifyToken<{ id: string }>(
 			access,
-			this.config.getRegistrationSecret(decoded.password),
+			this.config.getRegistrationSecret(decoded.id),
 		);
 
 		if (!isValid) throw new UnauthorizedError();
 
-		return this.signup(details);
+		const data = await this.signup(details);
+		this.PROTECTED_SIGN_UP_IDS.delete(decoded.id);
+
+		return data;
 	}
 
 	async getClientFromCookie(
