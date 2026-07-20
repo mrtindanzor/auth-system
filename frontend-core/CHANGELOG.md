@@ -1,5 +1,11 @@
 # @tindanzor/auth-client
 
+## 0.3.2
+
+### Patch Changes
+
+- 7c5eeef: Updated fe utility to format AxiosErrors
+
 ## 0.3.1
 
 ### Patch Changes
