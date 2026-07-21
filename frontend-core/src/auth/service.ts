@@ -1,20 +1,11 @@
 import axios from "axios";
 import type { AuthApiResponse, AuthTokens } from "../api/types";
 import { ForbiddenError } from "../errors";
-
-export interface IAuthService<
-	TLogin extends object,
-	TRegister extends object,
-	TResetPassword extends object,
-	TRequestPasswordReset extends object,
-> {
-	login(payload: TLogin): Promise<string>;
-	register(payload: TRegister): Promise<string>;
-	logout(): Promise<void>;
-	refresh(): Promise<string>;
-	requestPasswordReset?(payload: TRequestPasswordReset): Promise<void>;
-	resetPassword?(payload: TResetPassword): Promise<void>;
-}
+import type {
+	IAuthService,
+	TPasswordResetResponse,
+	TResetPassword,
+} from "./auth.types";
 
 export type AuthServiceOptions = {
 	baseUrl: string;
@@ -38,6 +29,10 @@ export type AuthServiceOptions = {
 		requestPasswordReset?: {
 			method: "post";
 			url: string;
+			resetPageDetails: {
+				url: string;
+				queryName: string;
+			};
 		};
 		resetPassword?: {
 			method: "post";
@@ -47,12 +42,9 @@ export type AuthServiceOptions = {
 	getAccessToken?: () => string | null;
 };
 
-class AuthService<
-	TLogin extends object,
-	TRegister extends object,
-	TResetPassword extends object,
-	TRequestPasswordReset extends object,
-> {
+class AuthService<TLogin extends object, TRegister extends object>
+	implements IAuthService<TLogin, TRegister>
+{
 	constructor(private options: AuthServiceOptions) {}
 
 	private async request<T>(
@@ -99,35 +91,42 @@ class AuthService<
 		return tokens.accessToken;
 	}
 
-	async requestPasswordReset(payload: TRequestPasswordReset) {
+	async requestPasswordReset(email: string): Promise<TPasswordResetResponse> {
 		if (!this.options.endpoints.requestPasswordReset)
 			throw new ForbiddenError("Request password reset endpoint not defined");
 
-		const { method, url } = this.options.endpoints.requestPasswordReset;
-		await this.request(url, payload, method);
+		const {
+			method,
+			url,
+			resetPageDetails: { url: resetUrl, queryName },
+		} = this.options.endpoints.requestPasswordReset;
+		const res = await this.request<TPasswordResetResponse>(
+			url,
+			{ email, url: resetUrl, queryName },
+			method,
+		);
+		return res;
 	}
 
-	async resetPassword(payload: TResetPassword) {
+	async resetPassword(
+		payload: TResetPassword,
+	): Promise<TPasswordResetResponse> {
 		if (!this.options.endpoints.resetPassword)
 			throw new ForbiddenError("Reset password endpoint not defined");
 
 		const { method, url } = this.options.endpoints.resetPassword;
-		await this.request(url, payload, method);
+		const res = await this.request<TPasswordResetResponse>(
+			url,
+			payload,
+			method,
+		);
+		return res;
 	}
 }
 
 export function createAuthService<
 	TLogin extends object,
 	TRegister extends object,
-	TResetPassword extends object,
-	TRequestPasswordReset extends object,
->(
-	options: AuthServiceOptions,
-): IAuthService<TLogin, TRegister, TResetPassword, TRequestPasswordReset> {
-	return new AuthService<
-		TLogin,
-		TRegister,
-		TResetPassword,
-		TRequestPasswordReset
-	>(options);
+>(options: AuthServiceOptions): IAuthService<TLogin, TRegister> {
+	return new AuthService<TLogin, TRegister>(options);
 }

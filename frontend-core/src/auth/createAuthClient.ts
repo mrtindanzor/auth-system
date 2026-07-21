@@ -11,8 +11,6 @@ export function createAuthClient<
 	TUser extends IUserAccount,
 	TLogin extends object,
 	TRegister extends object,
-	TResetPassword extends object = object,
-	TRequestPasswordReset extends object = object,
 >(
 	options: Omit<AuthServiceOptions, "getAccessToken">,
 	authGuardConfig: Omit<AuthGuardConfig, "isAuthenticated">,
@@ -23,18 +21,11 @@ export function createAuthClient<
 		isAuthenticated: () => useAuthStore.getState().isLoggedIn,
 	});
 	const useUserStore = createUserStore<TUser>();
-	const useAuthService = createUseAuthService<
-		TUser,
-		TLogin,
-		TRegister,
-		TResetPassword,
-		TRequestPasswordReset
-	>(useAuthStore, options);
-	const { useLogout, useSignin, useSignup } = createUseAuth(
+	const useAuthService = createUseAuthService<TUser, TLogin, TRegister>(
 		useAuthStore,
-		useUserStore,
-		useAuthService,
+		options,
 	);
+	const authHooks = createUseAuth(useAuthStore, useUserStore, useAuthService);
 	const useAuthRefresh = createUseAuthRefresh(
 		useAuthStore,
 		useUserStore,
@@ -42,12 +33,10 @@ export function createAuthClient<
 	);
 
 	return {
+		...authHooks,
 		useAuthStore,
 		useAuthService,
 		useUserStore,
-		useLogout,
-		useSignin,
-		useSignup,
 		authGuard,
 		useAuthRefresh,
 	};

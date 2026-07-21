@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { createAuthClient } from "../index";
+import { createAuthClient } from "../auth/createAuthClient";
 
 type User = {
 	email: string;
