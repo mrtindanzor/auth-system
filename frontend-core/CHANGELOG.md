@@ -1,5 +1,11 @@
 # @tindanzor/auth-client
 
+## 1.0.0
+
+### Major Changes
+
+- 94eaf75: Added password reset methods
+
 ## 0.4.1
 
 ### Patch Changes
