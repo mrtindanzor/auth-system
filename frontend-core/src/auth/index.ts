@@ -11,4 +11,3 @@ export {
 	type AuthStore,
 	createAuthStore,
 } from "./store";
-export { decodeUserFromToken } from "./tokens";
