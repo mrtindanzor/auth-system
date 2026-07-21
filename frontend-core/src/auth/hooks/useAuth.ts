@@ -1,27 +1,20 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import type { StoreApi, UseBoundStore } from "zustand";
 import type { IUserAccount } from "../../api/types";
 import type { UserStore } from "../../user";
 import { fe, tryCatch } from "../../utils";
-import type { IAuthService } from "../service";
+import type { IAuthService, TResetPassword } from "../auth.types";
 import type { AuthStore } from "../store";
 
 export function createUseAuth<
 	TUser extends IUserAccount,
 	TLogin extends object,
 	TRegister extends object,
-	TResetPassword extends object,
-	TRequestPasswordReset extends object,
 >(
 	useAuthStore: UseBoundStore<StoreApi<AuthStore<TUser>>>,
 	useUserStore: UseBoundStore<StoreApi<UserStore<TUser>>>,
-	useAuthService: () => IAuthService<
-		TLogin,
-		TRegister,
-		TResetPassword,
-		TRequestPasswordReset
-	>,
+	useAuthService: () => IAuthService<TLogin, TRegister>,
 ) {
 	function useSignin(props?: { resolver?: Resolver<TLogin> }) {
 		const { register, handleSubmit, formState, reset, setError } =
@@ -67,6 +60,57 @@ export function createUseAuth<
 		return { register, formState, onSubmit };
 	}
 
+	function useRequestPasswordReset(props?: {
+		resolver?: Resolver<{ email: string }>;
+	}) {
+		const { register, handleSubmit, formState, reset, setError } = useForm<{
+			email: string;
+		}>(props);
+		const [successMessage, setSuccessMessage] = useState<string | null>(null);
+		const authService = useAuthService();
+
+		const onSubmit = handleSubmit(async ({ email }) => {
+			setSuccessMessage(null);
+			const [res, error] = await tryCatch(
+				authService.requestPasswordReset(email),
+			);
+
+			if (error) {
+				return setError("root", {
+					message: fe(error),
+				});
+			}
+
+			if (res) setSuccessMessage(res.message);
+			reset();
+		});
+
+		return { register, formState, onSubmit, successMessage };
+	}
+
+	function usePasswordReset(props?: { resolver?: Resolver<TResetPassword> }) {
+		const { register, handleSubmit, formState, reset, setError } =
+			useForm<TResetPassword>(props);
+		const [successMessage, setSuccessMessage] = useState<string | null>(null);
+		const authService = useAuthService();
+
+		const onSubmit = handleSubmit(async (details) => {
+			setSuccessMessage(null);
+			const [res, error] = await tryCatch(authService.resetPassword(details));
+
+			if (error) {
+				return setError("root", {
+					message: fe(error),
+				});
+			}
+
+			if (res) setSuccessMessage(res.message);
+			reset();
+		});
+
+		return { register, formState, onSubmit, successMessage };
+	}
+
 	function useLogout() {
 		const authService = useAuthService();
 		const logout = useCallback(async () => {
@@ -79,5 +123,11 @@ export function createUseAuth<
 		return { logout };
 	}
 
-	return { useSignin, useSignup, useLogout };
+	return {
+		useSignin,
+		useSignup,
+		useLogout,
+		usePasswordReset,
+		useRequestPasswordReset,
+	};
 }
