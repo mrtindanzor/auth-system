@@ -25,11 +25,7 @@ export function createAuthClient<
 		useAuthStore,
 		options,
 	);
-	const { useLogout, useSignin, useSignup } = createUseAuth(
-		useAuthStore,
-		useUserStore,
-		useAuthService,
-	);
+	const authHooks = createUseAuth(useAuthStore, useUserStore, useAuthService);
 	const useAuthRefresh = createUseAuthRefresh(
 		useAuthStore,
 		useUserStore,
@@ -37,12 +33,10 @@ export function createAuthClient<
 	);
 
 	return {
+		...authHooks,
 		useAuthStore,
 		useAuthService,
 		useUserStore,
-		useLogout,
-		useSignin,
-		useSignup,
 		authGuard,
 		useAuthRefresh,
 	};
